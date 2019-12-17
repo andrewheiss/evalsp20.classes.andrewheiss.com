@@ -1,0 +1,28 @@
+---
+title: "Instrumental variables I"
+linktitle: "11: IV I"
+date: "2019-11-11"
+class_date: "2019-11-11"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 11
+type: docs
+weight: 11
+editor_options: 
+  chunk_output_type: inline
+---
+
+## Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

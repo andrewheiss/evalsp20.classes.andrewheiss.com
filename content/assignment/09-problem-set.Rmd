@@ -1,0 +1,16 @@
+---
+title: "Problem set 9"
+date: "2019-11-16"
+due_date: "2019-11-16"
+due_time: "11:59 PM"
+menu:
+  assignment:
+    parent: Problem sets
+    weight: 9
+type: docs
+weight: 9
+editor_options: 
+  chunk_output_type: console
+---
+
+The instructions for this problem set will go live 2 weeks before the deadline.

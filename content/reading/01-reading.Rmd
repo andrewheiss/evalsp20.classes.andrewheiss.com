@@ -1,0 +1,25 @@
+---
+title: "What is program evaluation? + Introduction to R, RStudio, and the tidyverse"
+linktitle: "1: What is program evaluation"
+date: "2019-08-26"
+read_date: "2019-08-26"
+menu:
+  reading:
+    parent: Readings
+    weight: 1
+type: docs
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+---
+
+## Required
+
+- The [syllabus](/syllabus/) and [assignments](/assignments/) pages for this class
+- <i class="fas fa-book"></i> Chapter 1 in *Impact Evaluation in Practice* [@wb-eval]
+- <i class="fab fa-youtube"></i> DJ Patil, ["What Makes a Radical and Revolutionary Technology?](https://www.youtube.com/watch?v=UOoMzaWOQJA) ^[DJ Patil is the former Chief Data Scientist of the United States under President Obama. He gave this forum address at Brigham Young University on February 13, 2018.]
+- <i class="fas fa-external-link-square-alt"></i> Stephen Goldsmith, ["Next Generation of Public Employees Must Understand Data and Policy"](http://www.govtech.com/opinion/Next-Generation-Public-Employees-Must-Understand-Data-Policy.html)
+- <i class="fas fa-external-link-square-alt"></i> Chris Sommerfeld, ["The Rise of the Data Scientists"](https://datasmart.ash.harvard.edu/news/article/the-rise-of-the-data-scientists-611)
+- <i class="fas fa-external-link-square-alt"></i> Zack Quaintance, ["Summit on Data-Smart Government Day Two Shows How Fast the Discipline Has Grown"](http://www.govtech.com/civic/Summit-on-Data-Smart-Government-Day-Two-Shows-How-Fast-the-Discipline-Has-Grown.html)
+- <i class="fas fa-external-link-square-alt"></i> Hadley Wickham, ["Data Science: How is it Different To Statistics?"](http://bulletin.imstat.org/2014/09/data-science-how-is-it-different-to-statistics%E2%80%89/)
+
+![](/img/readings/ds-venn.png)

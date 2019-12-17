@@ -1,0 +1,17 @@
+---
+title: "Instrumental variables II"
+linktitle: "12: Instrumental variables II"
+date: "2019-11-18"
+read_date: "2019-11-18"
+menu:
+  reading:
+    parent: Readings
+    weight: 12
+type: docs
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+---
+
+## Required
+
+- Review the readings from [last week](/reading/11-reading/)

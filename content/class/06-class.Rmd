@@ -1,0 +1,28 @@
+---
+title: "Threats to validity"
+linktitle: "6: Threats to validity"
+date: "2019-10-07"
+class_date: "2019-10-07"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 6
+type: docs
+weight: 6
+editor_options: 
+  chunk_output_type: console
+---
+
+## Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

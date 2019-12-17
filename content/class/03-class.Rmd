@@ -1,0 +1,28 @@
+---
+title: "Theories of change"
+linktitle: "3: Theories of change"
+date: "2019-09-16"
+class_date: "2019-09-16"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 3
+type: docs
+weight: 3
+editor_options: 
+  chunk_output_type: console
+---
+
+### Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

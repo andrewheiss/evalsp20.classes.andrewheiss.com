@@ -1,0 +1,28 @@
+---
+title: "Diff-in-diff I"
+linktitle: "8: Diff-in-diff I"
+date: "2019-10-21"
+class_date: "2019-10-21"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 8
+type: docs
+weight: 8
+editor_options: 
+  chunk_output_type: console
+---
+
+## Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

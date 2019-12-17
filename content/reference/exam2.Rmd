@@ -1,0 +1,21 @@
+---
+title: Things you should know for Exam 2
+date: "2019-11-18"
+menu:
+  reference:
+    parent: Reference
+    weight: 3
+type: docs
+weight: 3
+output:
+  blogdown::html_page:
+      toc: TRUE
+---
+
+## Randomization
+
+## Difference-in-difference
+
+## Regression discontinuity
+
+## Instrumental variables

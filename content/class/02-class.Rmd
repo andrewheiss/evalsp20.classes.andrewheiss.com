@@ -1,0 +1,28 @@
+---
+title: "Regression and inference"
+linktitle: "2: Regression and inference"
+date: "2019-09-09"
+class_date: "2019-09-09"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 2
+type: docs
+weight: 2
+editor_options: 
+  chunk_output_type: console
+---
+
+## Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

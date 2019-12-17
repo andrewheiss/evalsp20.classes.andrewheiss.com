@@ -1,0 +1,19 @@
+---
+title: "Randomization"
+linktitle: "7: Randomization"
+date: "2019-10-14"
+menu:
+  reading:
+    parent: Readings
+    weight: 7
+type: docs
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+---
+
+## Required
+
+- <i class="fas fa-book"></i> Chapter 4 in *Impact Evaluation in Practice* [@wb-eval]
+- <i class="fas fa-book"></i> Chapter 1 in *Mastering 'Metrics* [@AngristPischke:2015]
+- <i class="fas fa-podcast"></i> Planet Money, ["Moving To Opportunity?,"](https://www.npr.org/2019/08/30/756028025/episode-937-moving-to-opportunity) episode 937
+- <i class="fas fa-external-link-square-alt"></i> Aaron Carroll, ["Workplace Wellness Programs Don’t Work Well. Why Some Studies Show Otherwise,"](https://www.nytimes.com/2018/08/06/upshot/employer-wellness-programs-randomized-trials.html) *The Upshot*, August 6, 2018

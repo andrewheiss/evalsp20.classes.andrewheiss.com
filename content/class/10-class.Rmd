@@ -1,0 +1,28 @@
+---
+title: "Regression discontinuity I"
+linktitle: "10: RD I"
+date: "2019-11-04"
+class_date: "2019-11-04"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 10
+type: docs
+weight: 10
+editor_options: 
+  chunk_output_type: console
+---
+
+## Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

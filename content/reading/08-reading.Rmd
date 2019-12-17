@@ -1,0 +1,19 @@
+---
+title: "Difference-in-difference I"
+linktitle: "8: Difference-in-difference I"
+date: "2019-10-21"
+read_date: "2019-10-21"
+menu:
+  reading:
+    parent: Readings
+    weight: 8
+type: docs
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+---
+
+## Required
+
+- <i class="fas fa-book"></i> Chapter 7 in *Impact Evaluation in Practice* [@wb-eval]
+- <i class="fas fa-book"></i> Chapter 5 in *Mastering 'Metrics* [@AngristPischke:2015]
+- <i class="fas fa-book"></i> "Differences-in-differences" in *Causal Inference: The Mixtape* [@mixtape]

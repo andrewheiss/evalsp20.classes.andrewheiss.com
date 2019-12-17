@@ -1,0 +1,141 @@
+---
+title: Things you should know for Exam 1
+date: "2019-11-18"
+menu:
+  reference:
+    parent: Reference
+    weight: 2
+type: docs
+weight: 2
+output:
+  blogdown::html_page:
+      toc: TRUE
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#evidence-causation-and-evaluation">Evidence, causation, and evaluation</a></li>
+<li><a href="#regression-and-inference">Regression and inference</a></li>
+<li><a href="#theories-of-change-and-measurement">Theories of change and measurement</a></li>
+<li><a href="#counterfactuals-and-dags">Counterfactuals and DAGs</a></li>
+<li><a href="#threats-to-validity">Threats to validity</a></li>
+</ul>
+</div>
+
+<div id="evidence-causation-and-evaluation" class="section level2">
+<h2>Evidence, causation, and evaluation</h2>
+<p><strong>You should understand…</strong></p>
+<ul>
+<li>…the difference between experimental research and observational research</li>
+<li>…the sometimes conflicting roles of science and intuition in public administration and policy</li>
+<li>…the difference between the various types of evaluations and how they target specific parts of a logic model</li>
+<li>…the difference between identifying correlation (math) and identifying correlation (philosophy and theory)</li>
+<li>…what it means for a relationship to be causal</li>
+</ul>
+</div>
+<div id="regression-and-inference" class="section level2">
+<h2>Regression and inference</h2>
+<p><strong>You should understand…</strong></p>
+<ul>
+<li>…the difference between correlation coefficients and regression coefficients</li>
+<li>…the difference between outcome/response/dependent and explanatory/predictor/independent variables</li>
+<li>…the two purposes of regression</li>
+<li>…what each of the components in a regression equation stand for, in both “flavors” of notation:
+<ul>
+<li><span class="math inline">\(y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \epsilon\)</span> for the statistical flavor</li>
+<li><span class="math inline">\(y = \alpha + \beta x_1 + \gamma x_2 + \epsilon\)</span> for the econometrics flavor</li>
+</ul></li>
+<li>…how sliders and switches work as metaphors for regression coefficients</li>
+<li>…what it means to hold variables constant (or to control for variables)</li>
+<li>…the different elements of the grammar of graphics and be able to identify how variables are encoded in a graph (i.e. how columns in a dataset can be represented through x/y coordinates, through color, through size, through fill, etc.)</li>
+</ul>
+<p><strong>You should be able to…</strong></p>
+<ul>
+<li>…write and interpret R code that calculates summary statistics for groups (i.e. <code>group_by() %&gt;% summarize()</code>)</li>
+<li>…write and interpret R code that builds linear models (i.e. <code>lm()</code>)</li>
+<li>…interpret regression coefficients</li>
+<li>…interpret other regression diagnostics like <span class="math inline">\(R^2\)</span></li>
+<li>…use the <code>%&gt;%</code> pipe in R to chain functions together</li>
+<li>…use <code>ggplot()</code> to visualize data</li>
+</ul>
+<p><strong>Helpful resources:</strong></p>
+<ul>
+<li><i class="fas fa-book"></i> Garrett Grolemund and Hadley Wickham, <a href="https://r4ds.had.co.nz/"><em>R for Data Science</em></a></li>
+<li><i class="fas fa-book"></i> Kieran Healy, <a href="http://socviz.co/makeplot.html#how-ggplot-works">“How ggplot works,”</a> chapter 3 in <em>Data Visualization: A Practical Introduction</em></li>
+</ul>
+</div>
+<div id="theories-of-change-and-measurement" class="section level2">
+<h2>Theories of change and measurement</h2>
+<p><strong>You should understand…</strong></p>
+<ul>
+<li>…how to describe a program’s theory of change</li>
+<li>…the difference between inputs, activities, outputs, and outcomes</li>
+<li>…the elements of a program’s impact theory: causes (activities) linked to effects (outcomes)</li>
+<li>…the elements of a program’s logic model: the explicit links between all its inputs, activities, outputs, and outcomes</li>
+<li>…the difference between implicit and articulated program theories</li>
+<li>…the purpose of smaller-scale mechanism testing</li>
+<li>…how indicators can be measured at different levels of abstraction</li>
+<li>…what makes an indicator a good indicator</li>
+</ul>
+<p><strong>You should be able to…</strong></p>
+<ul>
+<li>…identify a program’s underlying theory based on its mission statement</li>
+<li>…draw a program impact theory chart that links activities to outcomes</li>
+<li>…draw a program logic model that links inputs to activities to outputs to outcomes</li>
+<li>…identify the most central elements of a potential outcome measurement</li>
+</ul>
+</div>
+<div id="counterfactuals-and-dags" class="section level2">
+<h2>Counterfactuals and DAGs</h2>
+<p><strong>You should understand…</strong></p>
+<ul>
+<li>…how a causal model encodes our understanding of a causal process</li>
+<li>…how to identify front door and back door paths between treatment/exposure and outcome</li>
+<li>…why we avoid closing front door paths</li>
+<li>…why we close back door paths</li>
+<li>…why adjusting for colliders can distort causal effects</li>
+<li>…the difference between logic models and DAGs</li>
+<li>…the difference between individual level causal effects, average treatment effects (ATE), conditional average treatment effect (CATE), average treatment on the treated effects (ATT), and average treatment on the untreated (ATU)</li>
+<li>…what the fundamental problem of causal inference is and how we can attempt to address it</li>
+</ul>
+<p><strong>You should be able to…</strong></p>
+<ul>
+<li>…draw a possible DAG for a given causal relationship</li>
+<li>…identify all pathways between treatment/exposure and outcome</li>
+<li>…identify which nodes in the DAG need to be adjusted for (or closed)</li>
+<li>…identify colliders (which should not be adjusted for)</li>
+</ul>
+<p><strong>Helpful resources:</strong></p>
+<ul>
+<li><i class="fas fa-external-link-square-alt"></i> Malcom Barrett, <a href="https://cran.r-project.org/web/packages/ggdag/vignettes/intro-to-dags.html">“An Introduction to Directed Acyclic Graphs”</a></li>
+<li><i class="fas fa-external-link-square-alt"></i> Malcom Barrett, <a href="https://cran.r-project.org/web/packages/ggdag/vignettes/intro-to-ggdag.html">“An Introduction to ggdag”</a></li>
+<li><i class="fas fa-external-link-square-alt"></i> Judea Pearl, <a href="http://causality.cs.ucla.edu/blog/index.php/2019/08/14/a-crash-course-in-good-and-bad-control/">“A Crash Course in Good and Bad Control”</a>: A quick summary of back doors, front doors, confounders, colliders, and when to control/not control for DAG nodes</li>
+<li><i class="fab fa-youtube"></i> Causal Inference Bootcamp, <a href="https://modu.ssri.duke.edu/module/introduction-causal-inference/average-treatment-effect">“Average Treatment Effects,”</a> Duke University</li>
+<li><i class="fab fa-youtube"></i> Causal Inference Bootcamp, <a href="https://modu.ssri.duke.edu/module/introduction-causal-inference/unit-level-effect">“Unit Level Effects,”</a> Duke University</li>
+<li><i class="fab fa-youtube"></i> Causal Inference Bootcamp, <a href="https://modu.ssri.duke.edu/module/introduction-causal-inference/conditional-average-treatment-effect">“Conditional Average Treatment Effects,”</a> Duke University</li>
+<li><i class="fab fa-youtube"></i> Causal Inference Bootcamp, <a href="https://modu.ssri.duke.edu/module/introduction-causal-inference/counterfactuals">“Counterfactuals,”</a> Duke University</li>
+<li><i class="fas fa-external-link-square-alt"></i> Neel Ocean, <a href="http://www.neelocean.com/understanding-selection-bias/">“Understanding Selection Bias”</a>: explanation of how to identify selection bias from the ATT and the ATE, with an explanation of how ATE = ATT + selection bias under the potential outcomes framework</li>
+<li><i class="fas fa-external-link-square-alt"></i> Paul Hünermund, <a href="https://p-hunermund.com/2018/10/15/sample-selection-vs-selection-into-treatment/amp/?__twitter_impression=true">“Sample Selection vs. Selection Into Treatment”</a></li>
+</ul>
+</div>
+<div id="threats-to-validity" class="section level2">
+<h2>Threats to validity</h2>
+<p><strong>You should understand…</strong></p>
+<ul>
+<li>…what it means when a study has internal validity and know how to identify the major threats to internal validity, including: omitted variable bias (selection and attrition), trend issues (maturation, secular trends, seasonality, testing, regression to the mean), study calibration issues (measurement error, time frame of study), and contamination issues (Hawthorne effects, John Henry effects, spillovers, and intervening events)</li>
+<li>…why selection bias is the most pernicious and difficult threat to internal validity and how we can account for it</li>
+<li>…what it means when a study has external validity</li>
+<li>…what it means when the measures used in a study have construct validity</li>
+<li>…what it means when the analysis used in a study has statistical conclusion validity</li>
+</ul>
+<p><strong>You should be able to…</strong></p>
+<ul>
+<li>…identify existing and potential threats to validity in a study</li>
+<li>…suggest ways of addressing these threats</li>
+</ul>
+<p><strong>Helpful resources:</strong></p>
+<ul>
+<li>Really, just google <a href="https://www.google.com/search?q=threats+to+internal+validity">“threats to internal validity”</a> or <a href="https://www.google.com/search?q=threats+to+external+validity">“threats to external validity”</a> and you’ll find a billion different slide decks, articles, and lessons about these. They’re a pretty standard part of any research design class.</li>
+</ul>
+</div>

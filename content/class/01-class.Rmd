@@ -1,0 +1,30 @@
+---
+title: "What is program evaluation? + Introduction to R, RStudio, and the tidyverse"
+linktitle: "1: First day"
+date: "2019-08-26"
+class_date: "2019-08-26"
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
+output:
+  blogdown::html_page:
+    toc: true
+menu:
+  class:
+    parent: Class sessions
+    weight: 1
+type: docs
+weight: 1
+# pdf: /slides/PMAP-8521_2019-11-04.pdf
+# thumb: /slides/slides_2019-11-04.png
+editor_options: 
+  chunk_output_type: console
+---
+
+## Slides
+
+`r blogdown::shortcode("slides")`
+
+
+## Clearest and muddiest things
+
+`r blogdown::shortcode("feedback")`

@@ -1,0 +1,36 @@
+---
+title: "Ethics and open science"
+linktitle: "14: Ethics and open science"
+date: "2019-12-09"
+read_date: "2019-12-09"
+menu:
+  reading:
+    parent: Readings
+    weight: 14
+type: docs
+bibliography: ../../static/bib/references.bib
+csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+---
+
+## Required
+
+This looks like a lot, but most of these are quite short. 
+
+Keep in mind throughout all these readings that an "algorithm" in these contexts is typically some fancy type of regression model where the outcome variable is something binary like "Safe babysitter/unsafe babysitter," "Gave up seat in past/didn't give up seat in past", or "Violated probation in past/didn't violate probation in past", and the explanatory variables are hundreds of pieces of data that might predict those outcomes (social media history, flight history, race, etc.). 
+
+Data scientists build a (sometimes proprietary and complex) model based on existing data, plug in values for any given new person, multiply that person's values by the coefficients in the model, and get a final score in the end for how likely someone is to be a safe babysitter or how likely someone is to return to jail.
+
+- <i class="far fa-file-pdf"></i> Miguel A. Hernán, ["The C-Word: Scientific Euphemisms Do Not Improve Causal Inference From Observational Data"](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5888052/) [@Hernan:2018]
+- <i class="fas fa-external-link-square-alt"></i> Hannah Fresques and Meg Marco, ["'Your Default Position Should Be Skepticism' and Other Advice for Data Journalists From Hadley Wickham,"](https://www.propublica.org/nerds/hadley-wickham-your-default-position-should-be-skepticism-and-other-advice-for-data-journalists) *ProPublica*, June 10, 2019
+- <i class="fas fa-external-link-square-alt"></i> DJ Patil, ["A Code of Ethics for Data Science"](https://medium.com/@dpatil/a-code-of-ethics-for-data-science-cda27d1fac1)
+    - <i class="fas fa-book"></i> Mike Loukides, Hilary Mason, and DJ Patil, [*Ethics and Data Science*](https://www.amazon.com/dp/B07GTC8ZN7)^[This concise booklet is the result of DJ Patil's call for ethics in the previous post.]
+- <i class="fas fa-external-link-square-alt"></i> ["AI in 2018: A Year in Review"](https://medium.com/@AINowInstitute/ai-in-2018-a-year-in-review-8b161ead2b4e)
+- <i class="fas fa-external-link-square-alt"></i> ["How Big Data Is ‘Automating Inequality’"](https://www.nytimes.com/2018/05/04/books/review/automating-inequality-virginia-eubanks.html)
+- <i class="fas fa-external-link-square-alt"></i> ["In ‘Algorithms of Oppression,’ Safiya Noble finds old stereotypes persist in new media"](https://annenberg.usc.edu/news/diversity-and-inclusion/algorithms-oppression-safiya-noble-finds-old-stereotypes-persist-new)
+- <i class="fas fa-podcast"></i> [99% Invisible, "The Age of the Algorithm"](https://99percentinvisible.org/episode/the-age-of-the-algorithm/): Note that this is a podcast, or a 20ish minute audio story. **Listen to this.** The rest of the things on this page are helpful and supplementary (very few podcasts provide this much extra information), but you don't need to go through it all. 
+- <i class="fas fa-podcast"></i> [On the Media, "Biased Algorithms, Biased World"](https://www.wnycstudios.org/podcasts/otm/segments/biased-algorithms-biased-world)
+- <i class="fas fa-external-link-square-alt"></i> ["Wanted: The ‘perfect babysitter.’ Must pass AI scan for respect and attitude."](https://www.washingtonpost.com/technology/2018/11/16/wanted-perfect-babysitter-must-pass-ai-scan-respect-attitude/?utm_term=.080010494ed5)
+- <i class="fas fa-external-link-square-alt"></i> ["Companies are on the hook if their hiring algorithms are biased"](https://qz.com/1427621/companies-are-on-the-hook-if-their-hiring-algorithms-are-biased/)
+- <i class="fas fa-external-link-square-alt"></i> ["Courts use algorithms to help determine sentencing, but random people get the same results"](https://www.popsci.com/recidivism-algorithm-random-bias)
+- <i class="fab fa-twitter-square"></i> [David Heinemeier Hansson's rant on the Apple Card](https://twitter.com/dhh/status/1192540900393705474)
+    - And [Jamie Heinemeier Hansson's response](https://dhh.dk/2019/about-the-apple-card.html)
