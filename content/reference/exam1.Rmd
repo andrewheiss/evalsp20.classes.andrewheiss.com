@@ -4,9 +4,9 @@ date: "2019-11-18"
 menu:
   reference:
     parent: Reference
-    weight: 2
+    weight: 3
 type: docs
-weight: 2
+weight: 3
 output:
   blogdown::html_page:
       toc: TRUE
