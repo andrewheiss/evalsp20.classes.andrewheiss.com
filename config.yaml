@@ -1,4 +1,4 @@
-baseurl: /
+baseurl: https://evalsp20.classes.andrewheiss.com/
 defaultContentLanguage: en
 title: "Program Evaluation"
 theme: hugo-academic
