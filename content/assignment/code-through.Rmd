@@ -17,6 +17,8 @@ The objectives of this class include "Become curious and confident in consuming 
 
 One of the reasons R is so popular is because the R community is exceptionally generous and open and sharing.^[So are Python and other modern open source languages too.] The internet is full of tutorials and code-throughs where people explain how to do something interesting with R.
 
+Additionally, teaching someone how to do something is one of the best ways to ensure that you know how to do it too. Some R developers have even started to adopt [tutorial-focused approaches to development](https://twitter.com/gvwilson/status/1209099180133752838), where their code isn't complete until they can easily teach it to others. 
+
 You will complete this assignment on your own, but you can get help from others (but you can't all write about the same topic).
 
 
