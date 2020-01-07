@@ -1,8 +1,8 @@
 ---
-title: "Difference-in-difference I"
-linktitle: "8: Difference-in-difference I"
-date: "2019-10-21"
-read_date: "2019-10-21"
+title: "Difference-in-differences I"
+linktitle: "8: Diff-in-diff I"
+date: "2020-03-04"
+read_date: "2020-03-04"
 menu:
   reading:
     parent: Readings

@@ -1,8 +1,8 @@
 ---
-title: "Work day"
-linktitle: "13: Work day"
-date: "2019-12-02"
-read_date: "2019-12-02"
+title: "Planning and running evaluations + other types of evaluation"
+linktitle: "13: Planning evaluations + other evaluations"
+date: "2020-04-15"
+read_date: "2020-04-15"
 menu:
   reading:
     parent: Readings
@@ -14,4 +14,5 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
-- Nothing! Today will be a catch-up, work-on-your-project-and-code-through day!
+- <i class="fas fa-file-pdf"></i> ["Types of Evaluation,"](https://www.cdc.gov/std/Program/pupestd/Types%20of%20Evaluation.pdf) National Center for HIV/AIDS, Viral Hepatitis, STD, and TB Prevention, Centers for Disease Control (CDC)
+- <i class="fas fa-book"></i> Chapters 11–14 in *Impact Evaluation in Practice* [@wb-eval]

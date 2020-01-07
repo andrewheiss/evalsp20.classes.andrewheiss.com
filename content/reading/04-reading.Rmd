@@ -1,8 +1,8 @@
 ---
-title: "Counterfactuals and DAGs I"
-linktitle: "4: Counterfactuals and DAGs I"
-date: "2019-09-23"
-read_date: "2019-09-23"
+title: "Measurement and DAGs"
+linktitle: "4: Measurement and DAGs"
+date: "2020-02-05"
+read_date: "2020-02-05"
 menu:
   reading:
     parent: Readings
@@ -14,7 +14,11 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
-- <i class="fas fa-book"></i> Chapter 3 in *Impact Evaluation in Practice* [@wb-eval]
-- <i class="fas fa-book"></i> "Directed acyclical graphs" in *Causal Inference: The Mixtape* [@mixtape]
+### Measurement
+
+- <i class="fas fa-book"></i> Chapter 5 in *Evaluation: A Systematic Approach* [@RossiLipseyHenry:2019]. This is available on iCollege.
+
+### DAGs
+
 - <i class="far fa-file-pdf"></i> Julia M. Rohrer, "Thinking Clearly About Correlations and Causation: Graphical Causal Models for Observational Data" [@Rohrer:2018] This will be posted on iCollege.
-- Other readings TBA
+- <i class="fas fa-book"></i> "Directed acyclical graphs" in *Causal Inference: The Mixtape* [@mixtape]

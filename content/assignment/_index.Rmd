@@ -33,20 +33,29 @@ To encourage attendance and preparation, I use an honor-system-based self-report
     - I skimmed it (*2 points*)
     - I didn't read it at all (*0 points*)
 
-Each day is worth 15.5 points. *It is unlikely that you'll score a 15.5 every day.*^[But it would be amazing if you did!] I will shift the distribution of everyone's final preparation score up at the end of the course.
+Each day is worth 15.5 points. *It is unlikely that you'll score a 15.5 every day.*^[But it would be amazing if you did!] Your total preparation score will naturally shift up at the end of the semester, though, since the preparation category is worth 210 points rather than 217 (15.5 × 14), so be honest—there's wiggle room in the point system for honesty.
 
 
 ## Problem sets
 
 To practice writing R code, running inferential models, and thinking about causation, you will complete a series of problem sets. 
 
-There are 10 possible problem sets on the schedule. **You must turn in 8 of the 10 problem sets**. You need to show that you made a good faith effort to work each question. I will not grade these in detail. The problem sets will be graded using a check system:
+There are 7 problem sets on the schedule. **I will keep the highest grades for 6 of them.** That is, I will drop the lowest score (even if it's a zero). This means you can skip one of the problem sets. You need to show that you made a good faith effort to work each question. I will not grade these in detail. The problem sets will be graded using a check system:
 
-- ✔+: (*44 points (110%) in gradebook*) Problem set is 100% completed. Every question was attempted and answered, and most answers are correct. Document is clean and easy to follow. Work is exceptional. I will not assign these often.
-- ✔: (*37 points (92.5%) in gradebook*) Problem set is 70–99% complete and most answers are correct. **This is the expected level of performance.**
-- ✔−: (*20 points (50%) in gradebook*) Problem set is less than 70% complete and/or most answers are incorrect. This indicates that you need to improve next time. I will hopefully not asisgn these often.
+- ✔+: (*33 points (110%) in gradebook*) Problem set is 100% completed. Every question was attempted and answered, and most answers are correct. Document is clean and easy to follow. Work is exceptional. I will not assign these often.
+- ✔: (*28 points (93%) in gradebook*) Problem set is 70–99% complete and most answers are correct. **This is the expected level of performance.**
+- ✔−: (*15 points (50%) in gradebook*) Problem set is less than 70% complete and/or most answers are incorrect. This indicates that you need to improve next time. I will hopefully not asisgn these often.
 
 You may (and should!) work together on the problem sets, but *you must turn in your own answers.* You cannot work in groups of more than **four** people, and you must note who participated in the group in your assignment.
+
+
+## Evaluation assignments
+
+For your [final project](/assignment/final-project/), you will conduct a pre-registered evaluation of a social program using synthetic data. To (1) give you practice with the principles of program evaluation, research design, measurement, and causal diagrams, and (2) help you with the foundation of your final project, you will complete a set of four evaluation-related assignments. 
+
+Ideally these will become major sections of your final project. However, there is no requirement that the programs you use in these assignments must be the same as the final project. If, through these assignments, you discover that your initially chosen program is too simple, too complex, too boring, etc., you can change at any time.
+
+These assignments will be graded using the same check system from the problem sets.
 
 
 ## Code-through
@@ -55,18 +64,9 @@ The objectives of this class include "Become curious and confident in consuming 
 
 One of the reasons R is so popular is because the R community is exceptionally generous and open and sharing.^[So are Python and other modern open source languages too.] The internet is full of tutorials and code-throughs where people explain how to do something interesting with R.
 
-You will write one code-through or tutorial during the semester on a of your choice (related to program evaluation and causal inference, of course). Complete details for the assignment (along with a lot of examples to look at) will be given later. You will complete this on your own, but you can get help from your team (but you can't all write about the same topic).
+You will write one code-through or tutorial during the semester on a of your choice (related to program evaluation and causal inference, of course). You will complete this on your own, but you can get help from your team (but you can't all write about the same topic). [You can find the instructions for the assignment here.](/assignment/code-through/)
 
-The [R-Weekly e-mail newsletter](https://rweekly.org/) includes dozens of these every week, and [Mara Averick](https://twitter.com/dataandme) (chief tidyverse advocate at RStudio) regularly tweets out links to different posts as well. Here are some others examples to give you a jist of what you'll be doing:^[Yours won't be nearly as complicated as these, by the way. Nor do they need to be. You'll illustrate and explain something simple.]
-
-- [The Greatest Twitter Scheme of All Time?](https://www.garrickadenbuie.com/blog/2018/08/24/greatest-twitter-scheme/)
-- [Mapping Fall Foliage with sf](https://rud.is/b/2017/09/18/mapping-fall-foliage-with-sf/)
-- [Exploring Minard's 1812 plot with ggplot2](https://www.andrewheiss.com/blog/2017/08/10/exploring-minards-1812-plot-with-ggplot2/)
-- [Animations in R](https://www.infoworld.com/video/89987/r-tip-animations-in-r)
-- [Drone sightings in the US, visualized](https://www.andrewheiss.com/blog/2016/04/03/drone-sightings-in-the-us-visualized/)
-- [Quickly play with Polity IV and OECD data (and see the danger of US democracy)](https://www.andrewheiss.com/blog/2017/08/26/quickly-play-with-polity-iv-and-oecd-data-and-see-the-danger-of-us-democracy/)
-
-This assignment will also be graded using the same check system from the problem sets.
+This assignment will be graded using the same check system from the problem sets.
 
 
 ## Exams
@@ -82,9 +82,6 @@ I will post examples of exam questions prior to the actual exams.
 
 At the end of the course, you will demonstrate your knowledge of program evaluation and causal inference by completing a final project.
 
-Project details will be posted later once I settle on the best form for it. This much is certain so far:
-
-- You will use program evaluation principles to analyze a real social program using simulated data
-- It will be so much fun!
+[Complete details for the final project are here.](/assignment/final-project/)
 
 There is no final exam. This project is your final exam.

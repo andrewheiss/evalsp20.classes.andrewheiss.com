@@ -1,0 +1,19 @@
+---
+title: "Threats to validity"
+date: "2020-02-26"
+due_date: "2020-02-26"
+due_time: "11:59 PM"
+menu:
+  assignment:
+    parent: Evaluation
+    weight: 4
+type: docs
+weight: 4
+output:
+  blogdown::html_page:
+    toc: true
+editor_options: 
+  chunk_output_type: console
+---
+
+The instructions for this assignment will go live 2 weeks before the deadline.

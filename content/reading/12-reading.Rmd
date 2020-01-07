@@ -1,8 +1,8 @@
 ---
-title: "Instrumental variables II"
-linktitle: "12: Instrumental variables II"
-date: "2019-11-18"
-read_date: "2019-11-18"
+title: "Instrumental variables II & Regression discontinuity II"
+linktitle: "12: IV II & RDD II"
+date: "2020-04-08"
+read_date: "2020-04-08"
 menu:
   reading:
     parent: Readings
@@ -14,4 +14,4 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
-- Review the readings from [last week](/reading/11-reading/)
+- Review the readings from [last week](/reading/11-reading/) and [the week before](/reading/10-reading/)

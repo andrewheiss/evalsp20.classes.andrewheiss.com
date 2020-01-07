@@ -1,8 +1,8 @@
 ---
 title: "Threats to validity"
 linktitle: "6: Threats to validity"
-date: "2019-10-07"
-read_date: "2019-10-07"
+date: "2020-02-19"
+read_date: "2020-02-19"
 menu:
   reading:
     parent: Readings
@@ -15,4 +15,3 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 ## Required
 
 - <i class="fas fa-book"></i> Chapter 9 in *Impact Evaluation in Practice* [@wb-eval]
-- Other readings TBA

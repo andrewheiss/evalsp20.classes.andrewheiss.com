@@ -1,8 +1,8 @@
 ---
-title: "What is program evaluation? + Introduction to R, RStudio, and the tidyverse"
-linktitle: "1: What is program evaluation"
-date: "2019-08-26"
-read_date: "2019-08-26"
+title: "Evaluation, data science, the causal revolution, and the tidyverse"
+linktitle: "1: Evaluation, causality, and the tidyverse"
+date: "2020-01-15"
+read_date: "2020-01-15"
 menu:
   reading:
     parent: Readings
@@ -14,7 +14,7 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
-- The [syllabus](/syllabus/) and [assignments](/assignments/) pages for this class
+- The [syllabus](/syllabus/) and [assignments](/assignment/) pages for this class
 - <i class="fas fa-book"></i> Chapter 1 in *Impact Evaluation in Practice* [@wb-eval]
 - <i class="fab fa-youtube"></i> DJ Patil, ["What Makes a Radical and Revolutionary Technology?](https://www.youtube.com/watch?v=UOoMzaWOQJA) ^[DJ Patil is the former Chief Data Scientist of the United States under President Obama. He gave this forum address at Brigham Young University on February 13, 2018.]
 - <i class="fas fa-external-link-square-alt"></i> Stephen Goldsmith, ["Next Generation of Public Employees Must Understand Data and Policy"](http://www.govtech.com/opinion/Next-Generation-Public-Employees-Must-Understand-Data-Policy.html)

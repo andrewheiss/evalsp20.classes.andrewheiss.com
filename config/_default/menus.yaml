@@ -25,5 +25,7 @@ assignment:
     weight: 1
   - name: Problem sets
     weight: 2
-  - name: Other projects
+  - name: Evaluation
     weight: 3
+  - name: Other projects
+    weight: 4

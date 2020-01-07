@@ -1,11 +1,11 @@
 ---
-title: "Problem set 1"
-date: "2020-01-22"
-due_date: "2020-01-22"
+title: "Background and theory"
+date: "2020-02-05"
+due_date: "2020-02-05"
 due_time: "11:59 PM"
 menu:
   assignment:
-    parent: Problem sets
+    parent: Evaluation
     weight: 1
 type: docs
 weight: 1
@@ -16,4 +16,4 @@ editor_options:
   chunk_output_type: console
 ---
 
-The instructions for this problem set will go live 2 weeks before the deadline.
+The instructions for this assignment will go live 2 weeks before the deadline.

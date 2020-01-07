@@ -1,7 +1,8 @@
 ---
-title: "Randomization"
-linktitle: "7: Randomization"
-date: "2019-10-14"
+title: "Randomization and matching"
+linktitle: "7: Randomization and matching"
+date: "2020-02-26"
+read_date: "2020-02-26"
 menu:
   reading:
     parent: Readings

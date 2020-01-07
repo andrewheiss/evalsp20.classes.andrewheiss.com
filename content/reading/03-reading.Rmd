@@ -1,9 +1,8 @@
 ---
-title: "Theories of change"
-linktitle: "3: Theories of change"
-summary: "This is a test"
-date: "2019-09-16"
-read_date: "2019-09-16"
+title: "Theories of change and logic models"
+linktitle: "3: Theories of change and logic models"
+date: "2020-01-29"
+read_date: "2020-01-29"
 menu:
   reading:
     parent: Readings
@@ -16,6 +15,7 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 ## Required
 
 - <i class="fas fa-book"></i> Chapter 2 in *Impact Evaluation in Practice* [@wb-eval]
+- <i class="fas fa-book"></i> Chapter 2 in *Evaluation: A Systematic Approach* [@RossiLipseyHenry:2019]. This is available on iCollege.
 - <i class="fas fa-book"></i> Chapter 3 in *Evaluation: A Systematic Approach* [@RossiLipseyHenry:2019]. This is available on iCollege.
 
 ## Additional pre-class assignment

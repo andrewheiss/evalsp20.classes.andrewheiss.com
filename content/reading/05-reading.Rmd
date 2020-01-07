@@ -1,8 +1,8 @@
 ---
-title: "Counterfactuals and DAGs II"
-linktitle: "5: Counterfactuals and DAGs II"
-date: "2019-09-30"
-read_date: "2019-09-30"
+title: "DAGs and potential outcomes"
+linktitle: "5: DAGs and potential outcomes"
+date: "2020-02-12"
+read_date: "2020-02-12"
 menu:
   reading:
     parent: Readings
@@ -14,5 +14,5 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
-- Review the readings from [last week](/reading/04-reading/)
+- <i class="fas fa-book"></i> Chapter 3 in *Impact Evaluation in Practice* [@wb-eval]
 - <i class="fas fa-book"></i> "Potential outcomes causal model" in *Causal Inference: The Mixtape* [@mixtape]

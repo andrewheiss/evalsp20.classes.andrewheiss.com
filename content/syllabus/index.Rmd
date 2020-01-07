@@ -206,9 +206,10 @@ You can find descriptions for all the assignments on the [assignments page](/ass
 ```{r assignments-grades, include=FALSE}
 assignments <- tribble(
   ~Points,   ~Assignment,
-  215        , "Preparation (≈ 15.5 × 14)",
-  8 * 40     , "Problem sets (8 × 40)",
-  50         , "Code-through",
+  210        , "Preparation (≈ 15.5 × 14)",
+  6 * 30     , "Problem sets (6 × 30)",
+  4 * 30     , "Evaluation assignments (4 × 30)",
+  30         , "Code-through",
   100        , "Exam 1",
   100        , "Exam 2",
   200        , "Final project"
@@ -251,8 +252,8 @@ grading %>%
 <div>
 
 
-## Cute animals
+## Star Wars
 
-Once you have read this entire syllabus and [the assignments page](/assignments/), please [click here](mailto:aheiss@gsu.edu) and e-mail me a picture of a *cute* non-feline, non-canine animal. For real. Brownie points if it's animated. 
+Once you have read this entire syllabus and [the assignments page](/assignment/), please [click here](mailto:aheiss@gsu.edu) and e-mail me a picture of a *cute* Star Wars character.^[Baby Yoda, Babu Frik, porgs, etc. are all super fair game.] Brownie points if it's animated. 
 
-`r blogdown::shortcode("figure", src = "https://media.giphy.com/media/3xz2BCohVTd7h2Kvfi/giphy.gif", alt = "Floating hedgehog", lightbox = "false")`
+`r blogdown::shortcode("figure", src = "https://media.giphy.com/media/j4q4h9uWKWwnYT1k3Z/giphy.gif", alt = "Baby Yoda with IG-11", lightbox = "false")`
