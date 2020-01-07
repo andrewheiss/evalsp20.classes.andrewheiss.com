@@ -7,27 +7,26 @@ csl: ../../static/bib/chicago-syllabus-no-bib.csl
 output:
   blogdown::html_page:
     toc: true
+    fig_caption: false
 ---
 
 
 <div id="TOC">
 <ul>
 <li><a href="#course-objectives">Course objectives</a></li>
-<li><a href="#course-philosophy">Course philosophy</a>
-<ul>
-<li><a href="#pep-talk">Pep talk!</a></li>
-</ul></li>
+<li><a href="#course-philosophy">Course philosophy</a></li>
+<li><a href="#important-pep-talk">Important pep talk!</a></li>
 <li><a href="#course-materials">Course materials</a>
 <ul>
 <li><a href="#books">Books</a></li>
 <li><a href="#articles-book-chapters-and-other-materials">Articles, book chapters, and other materials</a></li>
 <li><a href="#r-and-rstudio">R and RStudio</a></li>
-<li><a href="#online-help-and-slack">Online help and Slack</a></li>
+<li><a href="#online-help">Online help</a></li>
 </ul></li>
 <li><a href="#course-policies">Course policies</a>
 <ul>
 <li><a href="#course-evaluation-and-evolution">Course evaluation and evolution</a></li>
-<li><a href="#office-hours">Office hours</a></li>
+<li><a href="#student-hours">Student hours</a></li>
 <li><a href="#class-conduct-and-expectations">Class conduct and expectations</a></li>
 <li><a href="#laptops">Laptops</a></li>
 <li><a href="#counseling-and-psychological-services-cps">Counseling and Psychological Services (CPS)</a></li>
@@ -75,15 +74,17 @@ f(x) = \dfrac{1}{\sqrt{2\pi}} e^{-\frac12 x^2}
             std_dev = sd(temp))</code></pre>
 <p>Over the last decade there has been a revolution in statistical and scientific computing. Open source languages like R and Python have overtaken older (and expensive!) corporate software packages like SAS and SPSS, and there are now thousands of books and blog posts and other online resources with excellent tutorials about how to analyze pretty much any kind of data.</p>
 <p>This class will expose you to <a href="https://cran.r-project.org/">R</a>—one of the most popular, sought-after, and in-demand statistical programming languages. Armed with the foundation of R skills you’ll learn in this class, you’ll know enough to be able to find how to analyze any sort of data-based question in the future.</p>
-<div id="pep-talk" class="section level3">
-<h3>Pep talk!</h3>
+</div>
+<div id="important-pep-talk" class="section level2">
+<h2>Important pep talk!</h2>
+<p>I <em>promise</em> you can succeed in this class.</p>
 <p>Learning R can be difficult at first—it’s like learning a new language, just like Spanish, French, or Chinese. Hadley Wickham—the chief data scientist at RStudio and the author of some amazing R packages you’ll be using like <code>ggplot2</code>—<a href="https://r-posts.com/advice-to-young-and-old-programmers-a-conversation-with-hadley-wickham/">made this wise observation</a>:</p>
 <blockquote>
 <p>It’s easy when you start out programming to get really frustrated and think, “Oh it’s me, I’m really stupid,” or, “I’m not made out to program.” But, that is absolutely not the case. Everyone gets frustrated. I still get frustrated occasionally when writing R code. It’s just a natural part of programming. So, it happens to everyone and gets less and less over time. Don’t blame yourself. Just take a break, do something fun, and then come back and try again later.</p>
 </blockquote>
-<p>If you’re finding yourself taking way too long hitting your head against a wall and not understanding, take a break, talk to classmates, ask questions in Slack, e-mail me, etc.</p>
-<p>I <em>promise</em> you can do this.</p>
-</div>
+<p>Even experienced programmers and evaluators find themselves bashing their heads against seemingly intractable errors. If you’re finding yourself taking way too long hitting your head against a wall and not understanding, take a break, talk to classmates, e-mail me, etc.</p>
+<p><img src="/img/syllabus/hosrt_error_tweet.png" width="60%" /></p>
+<p><a href="https://twitter.com/allison_horst/status/1213275783675822080"><img src="/img/syllabus/gator_error.jpg" alt="Alison Horst: Gator error" /></a></p>
 </div>
 <div id="course-materials" class="section level2">
 <h2>Course materials</h2>
@@ -108,13 +109,12 @@ f(x) = \dfrac{1}{\sqrt{2\pi}} e^{-\frac12 x^2}
 <p>You will do all of your analysis with the open source (and free!) programming language <a href="https://cran.r-project.org/">R</a>. You will use <a href="https://www.rstudio.com/">RStudio</a> as the main program to access R. Think of R as an engine and RStudio as a car dashboard—R handles all the calculations and the actual statistics, while RStudio provides a nice interface for running R code.</p>
 <p>R is free, but it can sometimes be a pain to install and configure. To make life easier, you can (and should!) use the free <a href="http://rstudio.cloud/">RStudio.cloud</a> service, which lets you run a full instance of RStudio in your web browser. This means you won’t have to install anything on your computer to get started with R! We will have a shared class workspace in RStudio.cloud that will let you quickly copy templates for labs and problem sets.</p>
 <p>RStudio.cloud is convenient, but it can be slow and it is not designed to be able to handle larger datasets or more complicated analysis. Over the course of the semester, you’ll probably want to get around to installing R, RStudio, and other R packages on your computer and wean yourself off of RStudio.cloud. This isn’t necessary, but it’s helpful.</p>
-<p>You can <a href="/install/">find instructions for installing R, RStudio, and all the tidyverse packages here.</a></p>
+<p>You can <a href="/reference/install/">find instructions for installing R, RStudio, and all the tidyverse packages here.</a></p>
 </div>
-<div id="online-help-and-slack" class="section level3">
-<h3>Online help and Slack</h3>
+<div id="online-help" class="section level3">
+<h3>Online help</h3>
 <p>Data science and statistical programming can be difficult. Computers are stupid and little errors in your code can cause hours of headache (even if you’ve been doing this stuff for years!).</p>
 <p>Fortunately there are tons of online resources to help you with this. Two of the most important are <a href="https://stackoverflow.com/">StackOverflow</a> (a Q&amp;A site with hundreds of thousands of answers to all sorts of programming questions) and <a href="https://community.rstudio.com/">RStudio Community</a> (a forum specifically designed for people using RStudio and the tidyverse (i.e. you)).</p>
-<p>Additionally, we have a class chatroom at <a href="https://pmap8521fall2019.slack.com/">Slack</a> where anyone in the class can ask questions and anyone can answer. Ask questions about the readings, lectures, or problem sets on Slack. I will monitor it regularly, and you should also all do so as well. You’ll likely have similar questions as your peers, and you’ll likely be able to answer other peoples’ questions too.</p>
 </div>
 </div>
 <div id="course-policies" class="section level2">
@@ -132,13 +132,13 @@ f(x) = \dfrac{1}{\sqrt{2\pi}} e^{-\frac12 x^2}
 </ol>
 <p>Also, please take the time to fill out the official GSU course evaluation at the end of the semester!</p>
 </div>
-<div id="office-hours" class="section level3">
-<h3>Office hours</h3>
+<div id="student-hours" class="section level3">
+<h3>Student hours</h3>
 <p>Please watch this video:</p>
-<iframe src="https://player.vimeo.com/video/270014784" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen>
+<iframe src="https://player.vimeo.com/video/270014784" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="display: block; margin: 0 auto 1rem;">
 </iframe>
-<p>Office hours are set times dedicated to all of you. This means that I will be in my office (wistfully) waiting for you to come by with whatever questions you have. This is the best and easiest way to find me outside of class and the best chance for discussing class material and concerns. Please come by!</p>
-<p>Outside of regularly scheduled office hours, <a href="https://calendly.com/andrewheiss/meeting/">you can easily make an appointment with me online</a>.</p>
+<p>Student hours are set times dedicated to all of you (most professors call these “office hours”; I don’t<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>). This means that I will be in my office (wistfully) waiting for you to come by with whatever questions you have. This is the best and easiest way to find me outside of class and the best chance for discussing class material and concerns. Please come by!</p>
+<p>Outside of regularly scheduled student hours, <a href="https://calendly.com/andrewheiss/meeting/">you can easily make an appointment with me online</a>.</p>
 <p>This can be a difficult class. <strong>Do not suffer in silence!</strong> Come talk to me!</p>
 </div>
 <div id="class-conduct-and-expectations" class="section level3">
@@ -166,7 +166,7 @@ f(x) = \dfrac{1}{\sqrt{2\pi}} e^{-\frac12 x^2}
 <li>In cases where children come to class, I invite parents/caregivers to sit close to the door so as to more easily excuse yourself to attend to your child’s needs. Non-parents in the class: please reserve seats near the door for your parenting classmates.</li>
 <li>All students are expected to join with me in creating a welcoming environment that is respectful of your classmates who bring children to class.</li>
 </ol>
-<p>I understand that sleep deprivation and exhaustion are among the most difficult aspects of parenting young children. The struggle of balancing school, work, childcare, and graduate school is tiring, and I will do my best to accommodate any such issues while maintaining the same high expectations for all students enrolled in the class. <strong><em>Please do not hesitate to contact me with any questions of concerns.</em></strong></p>
+<p>I understand that sleep deprivation and exhaustion are among the most difficult aspects of parenting young children. The struggle of balancing school, work, childcare, and graduate school is tiring, and I will do my best to accommodate any such issues while maintaining the same high expectations for all students enrolled in the class. <strong><em>Please do not hesitate to contact me with any questions or concerns.</em></strong></p>
 </div>
 <div id="laurens-promise" class="section level3">
 <h3>Lauren’s Promise</h3>
@@ -178,7 +178,7 @@ f(x) = \dfrac{1}{\sqrt{2\pi}} e^{-\frac12 x^2}
 </div>
 <div id="academic-honesty" class="section level3">
 <h3>Academic honesty</h3>
-<p>Violation of <a href="https://deanofstudents.gsu.edu/faculty-staff-resources/academic-honesty/">GSU’s Policy on Academic Honesty</a> will result in an F in the course and possible disciplinary action.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> All violations will be formally reported to the Dean of Students.</p>
+<p>Violation of <a href="https://deanofstudents.gsu.edu/faculty-staff-resources/academic-honesty/">GSU’s Policy on Academic Honesty</a> will result in an F in the course and possible disciplinary action.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> All violations will be formally reported to the Dean of Students.</p>
 </div>
 <div id="special-needs" class="section level3">
 <h3>Special needs</h3>
@@ -311,6 +311,7 @@ f(x) = \dfrac{1}{\sqrt{2\pi}} e^{-\frac12 x^2}
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>So seriously, just don’t cheat or plagiarize!<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn1"><p>There’s fairly widespread misunderstanding about what office hours actually are! <a href="https://www.chronicle.com/article/Can-This-Man-Change-How-Elite/245714/">Many students often think that they are the times I <em>shouldn’t</em> be disturbed</a>, which is the exact opposite of what they’re for.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>So seriously, just don’t cheat or plagiarize!<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

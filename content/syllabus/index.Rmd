@@ -7,6 +7,7 @@ csl: ../../static/bib/chicago-syllabus-no-bib.csl
 output:
   blogdown::html_page:
     toc: true
+    fig_caption: false
 ---
 
 ```{r load-libraries, message=FALSE, warning=FALSE, include=FALSE}
@@ -60,15 +61,22 @@ Over the last decade there has been a revolution in statistical and scientific c
 
 This class will expose you to [R](https://cran.r-project.org/)—one of the most popular, sought-after, and in-demand statistical programming languages. Armed with the foundation of R skills you'll learn in this class, you'll know enough to be able to find how to analyze any sort of data-based question in the future.
 
-### Pep talk!
+## Important pep talk!
+
+I *promise* you can succeed in this class.
 
 Learning R can be difficult at first—it's like learning a new language, just like Spanish, French, or Chinese. Hadley Wickham—the chief data scientist at RStudio and the author of some amazing R packages you'll be using like `ggplot2`—[made this wise observation](https://r-posts.com/advice-to-young-and-old-programmers-a-conversation-with-hadley-wickham/): 
 
 > It’s easy when you start out programming to get really frustrated and think, “Oh it’s me, I’m really stupid,” or, “I’m not made out to program.” But, that is absolutely not the case. Everyone gets frustrated. I still get frustrated occasionally when writing R code. It’s just a natural part of programming. So, it happens to everyone and gets less and less over time. Don’t blame yourself. Just take a break, do something fun, and then come back and try again later.
 
-If you're finding yourself taking way too long hitting your head against a wall and not understanding, take a break, talk to classmates, ask questions in Slack, e-mail me, etc. 
+Even experienced programmers and evaluators find themselves bashing their heads against seemingly intractable errors. If you're finding yourself taking way too long hitting your head against a wall and not understanding, take a break, talk to classmates, e-mail me, etc. 
 
-I *promise* you can do this.
+```{r echo=FALSE, out.width="60%"}
+# https://twitter.com/allison_horst/status/1213275783675822080
+knitr::include_graphics("/img/syllabus/hosrt_error_tweet.png")
+```
+
+[![Alison Horst: Gator error](/img/syllabus/gator_error.jpg)](https://twitter.com/allison_horst/status/1213275783675822080)
 
 
 ## Course materials
@@ -99,15 +107,13 @@ R is free, but it can sometimes be a pain to install and configure. To make life
 
 RStudio.cloud is convenient, but it can be slow and it is not designed to be able to handle larger datasets or more complicated analysis. Over the course of the semester, you'll probably want to get around to installing R, RStudio, and other R packages on your computer and wean yourself off of RStudio.cloud. This isn't necessary, but it's helpful.
 
-You can [find instructions for installing R, RStudio, and all the tidyverse packages here.](/install/)
+You can [find instructions for installing R, RStudio, and all the tidyverse packages here.](/reference/install/)
 
-### Online help and Slack
+### Online help
 
 Data science and statistical programming can be difficult. Computers are stupid and little errors in your code can cause hours of headache (even if you've been doing this stuff for years!).
 
 Fortunately there are tons of online resources to help you with this. Two of the most important are [StackOverflow](https://stackoverflow.com/) (a Q&A site with hundreds of thousands of answers to all sorts of programming questions) and [RStudio Community](https://community.rstudio.com/) (a forum specifically designed for people using RStudio and the tidyverse (i.e. you)).
-
-Additionally, we have a class chatroom at [Slack](https://pmap8521fall2019.slack.com/) where anyone in the class can ask questions and anyone can answer. Ask questions about the readings, lectures, or problem sets on Slack. I will monitor it regularly, and you should also all do so as well. You'll likely have similar questions as your peers, and you'll likely be able to answer other peoples' questions too.
 
 
 ## Course policies
@@ -130,15 +136,15 @@ I’d *love* your help to help improve the class as we go. To facilitate this, I
 
 Also, please take the time to fill out the official GSU course evaluation at the end of the semester!
 
-### Office hours
+### Student hours
 
 Please watch this video:
 
-<iframe src="https://player.vimeo.com/video/270014784" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+<iframe src="https://player.vimeo.com/video/270014784" width="640" height="360" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="display: block; margin: 0 auto 1rem;"></iframe>
 
-Office hours are set times dedicated to all of you. This means that I will be in my office (wistfully) waiting for you to come by with whatever questions you have. This is the best and easiest way to find me outside of class and the best chance for discussing class material and concerns. Please come by!
+Student hours are set times dedicated to all of you (most professors call these "office hours"; I don't^[There's fairly widespread misunderstanding about what office hours actually are! [Many students often think that they are the times I *shouldn't* be disturbed](https://www.chronicle.com/article/Can-This-Man-Change-How-Elite/245714/), which is the exact opposite of what they're for.]). This means that I will be in my office (wistfully) waiting for you to come by with whatever questions you have. This is the best and easiest way to find me outside of class and the best chance for discussing class material and concerns. Please come by!
 
-Outside of regularly scheduled office hours, [you can easily make an appointment with me online](https://calendly.com/andrewheiss/meeting/). 
+Outside of regularly scheduled student hours, [you can easily make an appointment with me online](https://calendly.com/andrewheiss/meeting/). 
 
 This can be a difficult class. **Do not suffer in silence!** Come talk to me!
 
