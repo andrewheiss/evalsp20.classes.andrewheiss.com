@@ -32,7 +32,7 @@ imaging:
 
 
 copyright: ''
-enableGitInfo: false
+enableGitInfo: true
 hasCJKLanguage: false
 defaultContentLanguageInSubdir: false
 removePathAccents: true
