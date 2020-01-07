@@ -1,3 +1,16 @@
+h1, h2 {
+    font-weight: 700;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 1.8rem;
+    margin-top: 2.75rem;
+}
+
 .article-container {
     max-width: 960px;
 }
@@ -90,21 +103,16 @@ footer p {
 //     font-size: 1.2rem;
 // }
 
-// .fake-header-table {
-//     font-family: "Oswald", sans-serif;
-//     font-weight: 700;
-//     text-transform: uppercase;
-//     font-size: 1.25rem;
-//     display: block;
-//     padding-top: 1rem;
-//     border-bottom: 1px solid #909090;
-//     padding: 1em 0 0.25em;
-// }
+.fake-header-table, td.mid-table-header {
+    font-family: "Fira Sans Condensed", sans-serif;
+    font-weight: 700;
+}
 
-// td.mid-table-header {
-//     text-align: center;
-//     vertical-align: bottom !important;
-//     font-family: "Oswald", sans-serif;
-//     font-weight: 700;
-//     text-transform: uppercase;
-// }
+.fake-header-table {
+    font-size: 1.1rem;
+}
+
+td.mid-table-header {
+    text-align: center;
+    vertical-align: middle !important;
+}
