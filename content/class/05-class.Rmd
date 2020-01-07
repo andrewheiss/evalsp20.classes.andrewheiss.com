@@ -1,8 +1,8 @@
 ---
-title: "Counterfactuals and DAGs II"
-linktitle: "5: Counterfactuals and DAGs II"
-date: "2019-09-30"
-class_date: "2019-09-30"
+title: "DAGs and potential outcomes"
+linktitle: "5: DAGs and potential outcomes"
+date: "2020-02-12"
+class_date: "2020-02-12"
 bibliography: ../../static/bib/references.bib
 csl: ../../static/bib/chicago-syllabus-no-bib.csl
 output:
@@ -14,6 +14,8 @@ menu:
     weight: 5
 type: docs
 weight: 5
+# pdf: /slides/PMAP-8521_2019-11-04.pdf
+# thumb: /slides/slides_2019-11-04.png
 editor_options: 
   chunk_output_type: console
 ---

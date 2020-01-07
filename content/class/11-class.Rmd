@@ -1,8 +1,8 @@
 ---
 title: "Instrumental variables I"
 linktitle: "11: IV I"
-date: "2019-11-11"
-class_date: "2019-11-11"
+date: "2020-04-01"
+class_date: "2020-04-01"
 bibliography: ../../static/bib/references.bib
 csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 output:
@@ -14,6 +14,8 @@ menu:
     weight: 11
 type: docs
 weight: 11
+# pdf: /slides/PMAP-8521_2019-11-04.pdf
+# thumb: /slides/slides_2019-11-04.png
 editor_options: 
   chunk_output_type: inline
 ---
