@@ -16,4 +16,59 @@ editor_options:
   chunk_output_type: console
 ---
 
-The instructions for this problem set will go live 2 weeks before the deadline.
+
+**IMPORTANT**: This looks like a lot of work, but I've provided the majority of the code. Most of the time you'll just be running or modifying pre-written code chunks that are already there. Remember that you can run an entire chunk by clicking on the green play arrow in the top right corner of the chunk. You can also run lines of code line-by-line if you place your cursor on some R code and press "⌘ + enter" (for macOS users) or "ctrl + enter" (for Windows users).
+
+Make sure you run each chunk sequentially. If you run a chunk in the middle of the document without running previous ones, it might not work, since previous chunks might do things that later chunks depend on.
+
+Remember, if you're struggling, *please* talk to me. Work with classmates too. Don't suffer in silence! I promise that once you get the hang of this basic R coding stuff, the rest of the semester should go smoothly, and I *promise* that you can get the hang of this basic R coding stuff :).
+
+
+## Instructions
+
+1. Make a copy of the project named "Problem Set 1" on RStudio.cloud. If you don't have access to the class RStudio.cloud account, *please let me know as soon as possible*. [This link should take you to the project](https://rstudio.cloud/spaces/44864/project/823497)—if it doesn't, log in and look for the project named "Problem Set 1."
+
+    Alternatively, if you're using R on your own computer, download this file, *unzip it*, and double click on the file named `problem-set-1.Rproj`: [<i class="fas fa-file-archive"></i> `problem-set-1.zip`](/projects/problem-set-1.zip)
+    
+    You'll need to make sure you have these packages installed on your computer: `tidyverse`, `gapminder`, and `babynames`. If you try to load one of those packages with `library(tidyverse)` or `library(babynames)`, etc., and R gives an error that the package is missing, use the "Packages" panel in RStudio to install it.
+
+2. Rename the R Markdown file named `your-name_problem-set-1.Rmd` to something that matches your name and open it in RStudio.
+
+3. Complete the tasks given in the R Markdown file. Fill out code in the empty chunks provided (you can definitely copy, paste, and adapt from other code in the document—don't try to write everything from scratch!), and replace text in ALL CAPS with your own. (i.e. You'll see a bunch of `TYPE YOUR ANSWER HERE`s. Type your answers there). You don't need to type in ALL CAPS though.
+
+4. When you're all done, click on the "Knit" button at the top of the editing window and create a PDF or Word document of your problem set. Upload that file to iCollege.
+
+```{r knit-button, echo=FALSE, out.width="30%"}
+knitr::include_graphics("/img/assignments/knit-button.png")
+```
+
+
+## Extra instructions
+
+For Task 1 you should look through these videos and tutorials:
+
+- [Getting started with RStudio](http://stat545.com/block002_hello-r-workspace-wd-project.html)
+- [Introduction](http://rmarkdown.rstudio.com/lesson-1.html)
+- [How it Works](http://rmarkdown.rstudio.com/lesson-2.html)
+- [Code Chunks](http://rmarkdown.rstudio.com/lesson-3.html)
+- [Inline Code](http://rmarkdown.rstudio.com/lesson-4.html)
+- [Markdown Basics](http://rmarkdown.rstudio.com/lesson-8.html) (The [R Markdown Reference Guide](https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf) is super useful here.)
+- [Output Formats](http://rmarkdown.rstudio.com/lesson-9.html)
+
+For Task 3, you'll read through [Chapter 3 of R for Data Science](http://r4ds.had.co.nz/data-visualisation.html) and complete the following exercises. I've included all the questions and most of the code in the problem set itself.
+
+- [3.2.4](http://r4ds.had.co.nz/data-visualisation.html#exercises): Questions 1–5
+- [3.3.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-1): Questions 1–5
+- [3.5.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-2): Questions 1–4
+- [3.6.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-3): Questions 1–5
+- [3.8.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-5): Questions 1 and 2 
+
+```{r save-built-in-data, include=FALSE}
+library(readr)
+library(gapminder)
+library(babynames)
+library(here)
+
+write_csv(gapminder, here("static", "projects", "problem-set-1", "data", "gapminder.csv"))
+write_csv(babynames, here("static", "projects", "problem-set-1", "data", "babynames.csv"))
+```

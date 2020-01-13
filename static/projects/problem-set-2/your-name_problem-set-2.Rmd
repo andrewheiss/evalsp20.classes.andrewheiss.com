@@ -1,0 +1,202 @@
+---
+title: "Food access and mortality"
+author: "YOUR NAME HERE"
+date: "DATE GOES HERE"
+output: 
+  html_document: 
+    toc: yes
+  pdf_document: 
+    latex_engine: xelatex
+    toc: yes
+  word_document: 
+    toc: yes
+---
+
+```{r load-libraries-data, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(broom)
+library(huxtable)
+
+# Make sure you look at this dataset by clicking on its name in the Environment
+# panel in RStudio. Sort some of the different columns and look around to get a
+# feel for what's in the data
+food_health <- read_csv("data/food_health_politics.csv") 
+```
+
+# Introduction
+
+We're interested in looking at the relationships between food access, mortality, and politics. Do do this, we look at data from three different sources:
+
+- The USDA's [Food Environment Atlas](https://catalog.data.gov/dataset/food-environment-atlas-f4a22)
+- The CDC's ["Compressed Mortality File 1999-2015 Series 20 No. 2U, 2016"](http://wonder.cdc.gov/cmf-icd10.html)
+- 2016 election results (found all over the internet)
+
+Each row in the dataset is a US county. The main outcome we care about is `mortality_rate`, or the number of deaths per 100,000 people in a county between 2013-2015. Other interesting variables in the dataset include:
+
+- `pct_low_access_pop`: Percent of the county's population with low access to food
+- `pct_children_low_access`: Percent of the county's children with low access to food
+- `grocery_stores_per_1000`: Number of grocery stores in a county (per 1,000 residents)
+- `snap_stores_per_1000`: Number of stores that accept SNAP (food stamps) in a county (per 1,000 residents)
+- `fastfood_per_1000`: Number of fast food stores in a county (per 1,000 residents)
+- `per_dem_2012`: Percent of the county that voted for Obama in 2012
+- `per_dem_2016`: Percent of the county that voted for Clinton in 2016
+
+
+# Exploratory analysis
+
+## How related are mortality rate and access to food?
+
+```{r cor-mortality-food}
+# Notice how this is a little different from what was in the complete example
+# with SAT scores. It's not possible to calculate correlations when there is
+# missing data. The `use = "complete.obs"` argument here tells R to ignore any
+# rows where either mortality_rate or pct_low_access_pop is missing
+cor(food_health$mortality_rate, food_health$pct_low_access_pop,
+    use = "complete.obs")
+```
+
+SAY SOMETHING HERE. This is backwards from what you might expect, since it trends downward (i.e. the mortality rate is lower in counties with a greater proportion of the population with low access to food). Why might that be? Is there really a relationship?
+
+```{r plot-mortality-food, warning=FALSE}
+# Use warning=FALSE in the chunk options to remove the warning about missing data
+ggplot(food_health, aes(x = pct_low_access_pop, y = mortality_rate)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(x = "% of county with low access to food", 
+       y = "Mortality rate (per 100,000 residents)")
+```
+
+
+## How related are mortality rate and the prevalence of fast food restaurants?
+
+```{r cor-mortality-fastfood}
+
+```
+
+SAY SOMETHING HERE
+
+```{r plot-mortality-fastfood}
+
+```
+
+
+## How related are mortality rate and the prevalence of SNAP stores per 1,000 residents?
+
+```{r cor-mortality-snap}
+
+```
+
+SAY SOMETHING HERE
+
+```{r plot-mortality-snap}
+
+```
+
+
+## How related are mortality rate and the percent of the county that voted for Democrats in 2016?
+
+```{r cor-mortality-2016}
+
+```
+
+SAY SOMETHING HERE
+
+```{r plot-mortality-2016}
+
+```
+
+
+# Models
+
+## Does access to food predict mortality?
+
+SAY SOMETHING HERE
+
+```{r model-mortality-food}
+model_mortality_food <- lm(mortality_rate ~ pct_low_access_pop,
+                           data = food_health)
+
+tidy(model_mortality_food, conf.int = TRUE)
+```
+
+```{r model-details-mortality-food}
+glance(model_mortality_food)
+```
+
+
+INTERPRET THE COEFFICIENTS AND RESULTS HERE. What happens as the percent of low access to food goes up by 1%? Is that significant? Again, this is backwards from what you'd expect---as the percent of low access goes up, mortality drops. Why might that be? How much do you trust this finding? (Hint: look at the R2 value)
+
+## Do more SNAP stores per person predict mortality?
+
+```{r model-mortality-snap}
+
+```
+
+```{r model-details-mortality-snap}
+
+```
+
+
+SAY SOMETHING HERE. What happens as the proportion of SNAP stores goes up? Do you trust this number more or less than low access to food?
+
+## Do election results and access to food and SNAP stores predict mortality?
+
+RUN A MODEL THAT PREDICTS MORTALITY WITH A BUNCH OF COVARIATES (i.e. mortality_rate ~ pct_low_access_pop + snap_stores_per_1000 + per_dem_2016 + anything else you want to throw in)
+
+```{r model-mortality-lots-of-things}
+
+```
+
+```{r model-details-mortality-lots-of-things}
+
+```
+
+SAY SOMETHING HERE. Interpret the different coefficients. How predictive is this model (i.e. what's the R2)? Do you believe this model?
+
+## Mortality, contolling for state differences
+
+RUN A MODEL with some number of plausible independent/explanatory variables. Innclude `state` as one of them
+
+```{r model-mortality-state}
+# Add other explanatory variables here
+model_with_state <- lm(mortality_rate ~ pct_low_access_pop + state,
+                           data = food_health)
+
+# This table is 50+ rows long! While it might be interesting to see changes in
+# intercept in relation to Alaska (the omitted state here), like how Alabama's
+# mortality rate is 137 higher than Alaska's while DC's is 84 lower, it's not
+# super helpful. Controlling for state does capture some of the state-specific
+# reasons for varying mortality though, so it's good to include. We just don't
+# really need to see all those coefficients. To remove them from this table of
+# results, filter them out. The "!" in R means "not", so here we're only looking
+# at rows that don't start with "state"
+tidy(model_with_state, conf.int = TRUE) %>% 
+  filter(!str_starts(term, "state"))
+```
+
+```{r model-state-mortality-lots-of-things}
+
+```
+
+SAY SOMETHING ABOUT THIS MODEL
+
+
+# All models at the same time
+
+PUT ALL THE MODEL RESULTS IN THE SAME SIDE-BY-SIDE TABLE HERE
+
+```{r everything-together}
+# Right now there's only one model here. Add the others from above (whatever you
+# called them) like so: 
+# huxreg(model_mortality_food, some_other_model, yet_another_model, etc)
+
+# Also, by default, huxreg will include all the state coefficients, which we
+# don't want. We can create a list of all the state coefficient names and tell
+# huxreg to omit them.
+state_coef_names <- tidy(model_with_state) %>% 
+  filter(str_starts(term, "state")) %>% 
+  pull(term)
+
+huxreg(model_mortality_food, model_with_state,
+       omit_coefs = state_coef_names)
+```

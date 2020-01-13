@@ -1,0 +1,354 @@
+---
+title: "Problem set 1"
+author: "YOUR NAME HERE"
+date: "DATE HERE"
+---
+
+# Task 1: Getting comfortable with RStudio and R Markdown
+
+In the instructions for this problem set at https://evalsp20.classes.andrewheiss.com/assignment/01-problem-set/, there's a list of short videos and tutorials about RStudio and R Markdown. Tell me that you watched the videos and completed the series of R Markdown tutorials. You can delete this text here.
+
+
+# Task 2: Life expectancy in 2007
+
+For your first R-based work, you'll use data from the [Gapminder project](https://www.gapminder.org/). You may have seen Hans Rosling's [delightful TED talk](https://www.ted.com/talks/hans_rosling_shows_the_best_stats_you_ve_ever_seen) showing how global health and wealth have been increasing since 1800. If you haven't, you should watch it. Sadly, Hans died in February 2017.
+
+```{r setup, warning=FALSE, message=FALSE}
+# Notice the warning=FALSE and message=FALSE in the chunk options. R spits out 
+# a lot of messages when you load tidyverse and we don't want those in the 
+# final document.
+
+library(tidyverse)  # This loads ggplot2, dplyr, and other packages you'll need
+
+# This data is automatically loaded if you load the gapminder package with 
+# library(gapminder), but it's good to practice reading data from actual files
+gapminder <- read_csv("data/gapminder.csv")  # This loads data from a CSV file
+```
+
+Let's first look at the first few rows of data:
+
+```{r view-data}
+head(gapminder)
+```
+
+Right now, the `gapminder` data frame contains rows for all years for all countries. We want to only look at 2007, so we create a new data frame that filters only rows for 2007.
+
+Note how there's a weird sequence of characters: `%>%`. This is called a *pipe* and lets you chain functions together. We could have also written this as `gapminder_2007 <- filter(gapminder, year == 2007)`.
+
+```{r filter-2007}
+gapminder_2007 <- gapminder %>%
+  filter(year == 2007)
+
+head(gapminder_2007)
+```
+
+Now we can plot a histogram of 2007 life expectancies with the default settings:
+
+```{r plot-2007-1}
+ggplot(data = gapminder_2007, 
+       mapping = aes(x = lifeExp)) +
+  geom_histogram()
+```
+
+R will use 30 histogram bins by default, but that's not always appropriate, and it will yell at you for doing so. **Adjust the number of bins to 2, then 40, then 100.** **What's a good number for this data? Why?**
+
+TYPE YOUR ANSWER HERE.
+
+```{r plot-2007-2}
+ggplot(data = gapminder_2007, 
+       mapping = aes(x = lifeExp)) +
+  geom_histogram(bins = 2)
+```
+
+## Average life expectancy in 2007 by continent
+
+We're also interested in the differences of life expectancy across continents. First, we can group all rows by continent and calculate the mean
+
+This is where the `%>%` function is actually super useful. Remember that it lets you chain functions together—this means we can read these commands as a set of instructions: take the `gapminder` data frame, filter it, group it by continent, and summarize each group by calculating the mean. Without using the `%>%`, we could write this same chain like this: `summarize(group_by(filter(gapminder, year == 2007), continent), avg_life_exp = mean(lifeExp))`. But that's *awful* and impossible to read and full of parentheses that can easily be mismatched.
+
+```{r calc-mean}
+gapminder_cont_2007 <- gapminder %>%
+  filter(year == 2007) %>% 
+  group_by(continent) %>%
+  summarize(avg_life_exp = mean(lifeExp))
+
+head(gapminder_cont_2007)
+```
+
+Let's plot these averages as a bar chart:
+
+```{r plot-2007-bar}
+ggplot(data = gapminder_cont_2007, 
+       mapping = aes(x = continent, y = avg_life_exp, fill = continent)) + 
+  geom_col()
+```
+
+Then, let's plot them as density distributions. We don't need to use the summarized data frame for this, just the original filtered `gapminder_2007` data frame:
+
+```{r plot-2007-density}
+ggplot(data = gapminder_2007, 
+       mapping = aes(x = lifeExp, fill = continent)) + 
+  geom_density()
+```
+
+Now let's plot life expectancies as violin charts. These are the density distributions turned sideways:
+
+```{r plot-2007-violin}
+ggplot(data = gapminder_2007, 
+       mapping = aes(x = continent, y = lifeExp, fill = continent)) + 
+  geom_violin()
+```
+
+Finally, we can add actual points of data for each country to the violin chart:
+
+```{r plot-2007-violin-points}
+ggplot(data = gapminder_2007, 
+       mapping = aes(x = continent, y = lifeExp, fill = continent)) + 
+  geom_violin() +
+  geom_point()
+```
+
+The bar chart, density plot, violin plot, and violin plot + points each show different ways of looking at a single number—the average life expectancy in each continent. **Answer these questions:**
+
+- Which plot is most helpful? TYPE YOUR ANSWER HERE.
+- Which ones show variability? TYPE YOUR ANSWER HERE.
+- What's going on with Oceania? TYPE YOUR ANSWER HERE.
+
+
+# Task 3: R and ggplot
+
+Read through [Chapter 3 of R for Data Science](http://r4ds.had.co.nz/data-visualisation.html) and complete the following exercises:
+
+- [3.2.4](http://r4ds.had.co.nz/data-visualisation.html#exercises): Questions 1–5
+- [3.3.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-1): Questions 1–5
+- [3.5.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-2): Questions 1–4
+- [3.6.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-3): Questions 1–5
+- [3.8.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-5): Questions 1 and 2 
+
+```{r load-libraries-1, warning=FALSE, message=FALSE}
+# Technically you don't need to run this because we loaded tidyverse earlier in Task 2
+library(tidyverse)
+```
+
+## 3.2.4
+
+**1: Run `ggplot(data = mpg)`. What do you see?**
+
+```{r blank-plot, fig.width=2, fig.height=2}
+ggplot(data = mpg)
+```
+
+TYPE YOUR ANSWER HERE. (hint: I gave you the answer in the chunk name)
+
+(Notice how I used `fig.width` and `fig.height` in the chunk options. You can click on the little gear icon in the far right of the chunk to change other options.)
+
+**2: How many rows are in `mpg`? How many columns?**
+
+```{r mpg-details}
+nrow(mpg)
+ncol(mpg)
+
+# Or
+dim(mpg)
+
+# Or
+mpg
+```
+
+**3: What does the `drv` variable describe? Read the help for `?mpg` to find out.**
+
+TYPE YOUR ANSWER HERE.
+
+**4: Make a scatterplot of `hwy` vs `cyl`.**
+
+```{r hwy-cyl-scatterplot}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cyl, y = hwy))
+```
+
+**5: What happens if you make a scatterplot of `class` vs `drv`? Why is the plot not useful?**
+
+```{r class-drv-scatterplot}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = class, y = drv))
+```
+
+TYPE YOUR ANSWER HERE.
+
+
+## 3.3.1
+
+**1. What’s gone wrong with this code? Why are the points not blue?**
+
+TYPE YOUR ANSWER HERE.
+
+```{r }
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+```
+
+**2. Which variables in mpg are categorical? Which variables are continuous? (Hint: type ?mpg to read the documentation for the dataset). How can you see this information when you run mpg?**
+
+TYPE YOUR ANSWER HERE.
+
+**3. Map a continuous variable to color, size, and shape. How do these aesthetics behave differently for categorical vs. continuous variables?**
+
+```{r}
+# Here's some code you can copy/paste/adjust. The SOMETHING_CONTINUOUS won't
+# work---you'll need to change that to an actual variable name.
+#
+# Also note that this code is commented out (i.e. each line starts with a #), so
+# it won't run unless you remove the comments. You probably also don't want to
+# make a plot with all three geom_point layers, but probably three different
+# plots. Or if you're adventurous, set color, size, and shape all in the same
+# geom_point() layer
+
+# ggplot(data = mpg) + 
+#   geom_point(mapping = aes(x = displ, y = hwy, color = SOMETHING_CONTINUOUS))
+#   geom_point(mapping = aes(x = displ, y = hwy, size = SOMETHING_CONTINUOUS))
+#   geom_point(mapping = aes(x = displ, y = hwy, shape = SOMETHING_CONTINUOUS))
+```
+
+**4. What happens if you map the same variable to multiple aesthetics?**
+
+TYPE YOUR ANSWER HERE.
+
+
+## 3.5.1
+
+**1. What happens if you facet on a continuous variable?**
+
+TYPE YOUR ANSWER HERE. Try doing it in this chunk:
+
+```{r}
+
+```
+
+**2. What do the empty cells in plot with `facet_grid(drv ~ cyl)` mean? How do they relate to this plot?**
+
+TYPE YOUR ANSWER HERE.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = drv, y = cyl))
+```
+
+**3. What plots does the following code make? What does `.` do?**
+
+TYPE YOUR ANSWER HERE.
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv ~ .)
+```
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(. ~ cyl)
+```
+
+**4. Take the first faceted plot in this section:**
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+```
+
+**What are the advantages to using faceting instead of the colour aesthetic? What are the disadvantages? How might the balance change if you had a larger dataset?**
+
+TYPE YOUR ANSWER HERE.
+
+## 3.6.1
+
+**1. What geom would you use to draw a line chart? A boxplot? A histogram? An area chart?**
+
+TYPE YOUR ANSWER HERE.
+
+**2. Run this code in your head and predict what the output will look like. Then, run the code in R and check your predictions.**
+
+TYPE YOUR ANSWER HERE.
+
+**3. What does `show.legend = FALSE do?` What happens if you remove it?**
+
+TYPE YOUR ANSWER HERE.
+
+**4. What does the `se` argument to `geom_smooth()` do?**
+
+TYPE YOUR ANSWER HERE.
+
+**5. Will these two graphs look different? Why/why not?**
+
+TYPE YOUR ANSWER HERE.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+```{r}
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+```
+
+## 3.8.1
+
+**1. What is the problem with this plot? How could you improve it?**
+
+TYPE YOUR ANSWER HERE.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = cty, y = hwy)) + 
+  geom_point()
+```
+
+**2. What parameters to `geom_jitter()` control the amount of jittering?**
+
+TYPE YOUR ANSWER HERE.
+
+
+# Task 4: Baby names
+
+The `babynames` package includes data from the Social Security Administration with counts of baby names with at least 5 annual uses between 1880-2015 (with 1.8+ million rows!).
+
+Because there are so many names, we'll look at "Riley."
+
+```{r load-and-filter-babynames}
+# This data is automatically loaded if you load the babynames package with 
+# library(babynames), but it's good to practice reading data from actual files
+babynames <- read_csv("data/babynames.csv")  # Load data from a CSV file
+
+babynames_riley_only <- babynames %>%
+  filter(name == "Riley")
+
+head(babynames_riley_only)
+```
+
+Make a plot that shows how often the name "Riley" was used as a male and as a female name over time. (Hint: map the `sex` variable to the color aesthetic; also, the `n` variable shows the count per year)
+
+```{r riley-mf-time}
+ggplot(babynames_riley_only, aes(x = year, y = n, color = sex)) +
+  geom_line()
+```
+
+Given this trend, what can you say about the name "Riley"? Don't just describe what's happening in the picture---make a broader statement. For instance, what would you tell a parent who is interested in naming their child "Riley"?
+
+TYPE YOUR ANSWER HERE.
+
+Make similar graphs for "Ashley" and "Casey." Hint: You'll need to create a new filtered version of the `babynames` dataset, just like you did with `babynames_riley_only`.
+
+```{r ashley-mf-time}
+# Copy/paste code from above. Make a filtered dataset and plot it with ggplot
+```
+
+```{r casey-mf-time}
+# Copy/paste code from above. Make a filtered dataset and plot it with ggplot
+```
+
+What can you say about the trends in these names? Again, don't just say what's happening in the graph. Tell some sort of story and speculate about the differences in the patterns between the names.
+
+TYPE YOUR ANSWER HERE.

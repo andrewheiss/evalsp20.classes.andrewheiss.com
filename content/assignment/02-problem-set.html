@@ -15,4 +15,22 @@ editor_options:
 
 
 
-<p>The instructions for this problem set will go live 2 weeks before the deadline.</p>
+<p><strong>IMPORTANT</strong>: Again, this looks like a lot of work, but it’s mostly copying/pasting chunks of code and changing things.</p>
+<p>I’ve also provided a complete example of what the problem set will look like at the end (but with a different dataset) in the file named <code>complete_sat_example.Rmd</code> in the RStudio project. Open this and knit it so you can see all the code and output that you’ll get, and follow along with the code to see what it’s doing.</p>
+<p>Remember that you can run an entire chunk by clicking on the green play arrow in the top right corner of the chunk. You can also run lines of code line-by-line if you place your cursor on some R code and press “⌘ + enter” (for macOS users) or “ctrl + enter” (for Windows users).</p>
+<p>Make sure you run each chunk sequentially. If you run a chunk in the middle of the document without running previous ones, it might not work, since previous chunks might do things that later chunks depend on.</p>
+<p>Remember, if you’re struggling, <em>please</em> talk to me. Work with classmates too. Don’t suffer in silence!</p>
+<div id="instructions" class="section level1">
+<h1>Instructions</h1>
+<p>For this problem set, we’re less interested in causal relationships and more interested in the mechanics of manipulating data and running regressions in R. We’ll start caring about identification and causal models in the next problem set. Because of this, don’t put too much causal weight into the interpretations of these different models—this is an actual case of correlation not implying causation.</p>
+<ol style="list-style-type: decimal">
+<li><p>Open the project named “Problem Set 2” on RStudio.cloud. If you don’t have access to the class RStudio.cloud account, <em>please let me know as soon as possible</em>. <a href="https://rstudio.cloud/spaces/44864/project/823512">This link should take you to the project</a>—if it doesn’t, log in and look for the project named “Problem Set 2.”</p>
+<p>Alternatively, if you’re using R on your own computer, download this file, <em>unzip it</em>, and double click on the file named <code>problem-set-2.Rproj</code>: <a href="/projects/problem-set-2.zip"><i class="fas fa-file-archive"></i> <code>problem-set-2.zip</code></a></p>
+<p>You’ll need to make sure you have these packages installed on your computer: <code>tidyverse</code> and <code>huxtable</code>. If you try to load one of those packages with <code>library(tidyverse)</code> or <code>library(huxtable)</code>, etc., and R gives an error that the package is missing, use the “Packages” panel in RStudio to install it.</p></li>
+<li><p>Open the file named <code>complete_sat_example.Rmd</code> and knit it or start running the chunks of code individually. <em>You do not need to edit this or change anything or turn this in.</em> This is a complete example of some exploratory data analysis and regression models and is basically a template for your actual problem set.</p></li>
+<li><p>Rename the R Markdown file named <code>your-name_problem-set-2.Rmd</code> to something that matches your name and open it in RStudio.</p></li>
+<li><p>Complete the tasks given in the R Markdown file. Fill out code in the empty chunks provided (you can definitely copy, paste, and adapt from other code in the document or the SAT/GPA document—don’t try to write everything from scratch!), and replace text in ALL CAPS with your own. (i.e. You’ll see a bunch of <code>TYPE YOUR ANSWER HERE</code>s. Type your answers there.). Again, you don’t need to type your answers in all caps.</p></li>
+<li><p>When you’re all done, click on the “Knit” button at the top of the editing window and create a PDF or Word document of your problem set. Upload that file to iCollege.</p></li>
+</ol>
+<p><img src="/img/assignments/knit-button.png" width="30%" /></p>
+</div>
