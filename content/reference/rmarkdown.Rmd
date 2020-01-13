@@ -37,6 +37,10 @@ Here are the most important things you'll need to know about R Markdown in this 
 
     You can knit by clicking on the "Knit" button at the top of the editor window, or by pressing `⌘⇧K` on macOS or `control + shift + K` on Windows.
 
+```{r knit-button, indent="    ", echo=FALSE, out.width="30%"}
+knitr::include_graphics("/img/assignments/knit-button.png")
+```
+
 
 ## Add chunks
 
