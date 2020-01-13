@@ -63,7 +63,7 @@ For Task 3, you'll read through [Chapter 3 of R for Data Science](http://r4ds.ha
 - [3.6.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-3): Questions 1–5
 - [3.8.1](http://r4ds.had.co.nz/data-visualisation.html#exercises-5): Questions 1 and 2 
 
-```{r save-built-in-data, include=FALSE}
+```{r save-built-in-data, include=FALSE, eval=FALSE}
 library(readr)
 library(gapminder)
 library(babynames)
