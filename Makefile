@@ -1,11 +1,23 @@
 OUTPUTDIR=public
 SSH_TARGET=cloud:/home/andrew/sites/evalsp20.classes/public_html
 
-.PHONY : all zip_projects
+.PHONY : all clean serve build deploy thumb_slides zip_projects
 
-all: build
+all: thumb_slides zip_projects build
 
-# Filenames to work with
+
+# Automatic thumbnails ----------------------------------------------------
+TO_THUMB = $(wildcard static/slides/*.pdf)
+THUMB_TARGETS = $(addsuffix .png,$(basename $(TO_THUMB)))
+
+%.png: %.pdf
+	convert -thumbnail 1000 -background white -units PixelsPerInch -density 144 $<[0] $@
+
+thumb_slides: $(THUMB_TARGETS)
+
+
+# Automatic project zipping -----------------------------------------------
+# Project filenames to work with
 TO_ZIP_DIRS = $(filter %/, $(wildcard static/projects/*/))  # Find all directories in static/projects
 TO_ZIP_NAMES = $(patsubst %/,%,$(TO_ZIP_DIRS))  # Remove trailing /
 ZIP_TARGETS = $(addsuffix .zip,$(TO_ZIP_NAMES))  # Add .zip
@@ -35,10 +47,12 @@ $(ZIP_TARGETS): %.zip : $$(shell find % -type f ! -path "%/.*")
 
 zip_projects: $(ZIP_TARGETS)
 
+
+# Site building -----------------------------------------------------------
 clean:
 	rm -rf public/
 
-build: zip_projects
+build: thumb_slides zip_projects
 	Rscript -e "blogdown::build_site()"
 
 serve: build
