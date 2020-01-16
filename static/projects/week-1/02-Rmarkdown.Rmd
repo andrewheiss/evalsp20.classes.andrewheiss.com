@@ -1,0 +1,29 @@
+---
+title: "Playing with R Markdown"
+---
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+## Models
+
+Here's an example regression model:
+
+```{r}
+mpg_model <- lm(mpg ~ wt, data = mtcars)
+summary(mpg_model)
+```
+
+Neat! It's kind of ugly when you knit, but later I'll show you how to make this look pretty.
+
+You can also include graphics:
+
+```{r}
+ggplot(data = mtcars, 
+       mapping = aes(x = wt, y = mpg)) +
+  geom_point(mapping = aes(color = as.factor(cyl))) +
+  geom_smooth(method = "lm")
+```
+
+If you want to run R code within a paragraph of text instead of in a chunk, you can do that too. Like, 2 + 2 is equal to `r 2 + 2`, or pi rounded to the first 5 digits is `r round(pi, 5)`.

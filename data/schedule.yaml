@@ -5,6 +5,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Evaluation, data science, the causal revolution, and the tidyverse**'
     date: "January 15"
     reading: "01-reading"
+    class: "01-class"
 
   - title: '<i class="fas fa-university"></i> **Regression and inference**'
     date: "January 22"

@@ -14,8 +14,8 @@ menu:
     weight: 1
 type: docs
 weight: 1
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
+pdf: "/slides/PMAP-8521_2020-01-15.pdf"
+thumb: "/slides/PMAP-8521_2020-01-15.png"
 editor_options: 
   chunk_output_type: console
 ---
@@ -24,6 +24,11 @@ editor_options:
 
 `r blogdown::shortcode("slides")`
 
+## R stuff
+
+[Take a super short survey!](https://andhs.co/survey)
+
+Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week1.zip`](/projects/week-1.zip)
 
 ## Clearest and muddiest things
 

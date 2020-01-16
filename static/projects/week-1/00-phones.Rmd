@@ -1,0 +1,88 @@
+---
+title: "Mobile phone trends"
+author: "Andrew Heiss"
+date: "January 15, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Make it so all chunks are printed out in the final document
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)  # For manipulating and plotting data
+library(googlesheets4)  # For dealing with Google Sheets
+```
+
+## Import data 
+
+We can read in the super short survey data that we just collected using the `googlesheets` package. This might take a moment or two to run.
+
+```{r import, echo=FALSE, message=FALSE}
+sheets_deauth()  # The spreadsheet is public so we don't need to try to log in
+
+# Load data
+responses_raw <- read_sheet("1LrltZDSkTvJGH6URTuUoW8eEBliUXWWlzBPI6gYKbRg")
+
+# Rename some of the long column names
+responses <- responses_raw %>% 
+  rename(current_phone = `Who made your current mobile phone?`,
+         previous_phone = `Who made your previous mobile phone?`,
+         next_phone = `When you purchase your next mobile phone, who do you think the manufacturer will be?`)
+```
+
+We now have the data in a data frame called `responses` and it has `r nrow(responses)` survey responses in it.
+
+## Tidying the data
+
+Let's look at the first 5 rows of the data to get a sense of how it is formatted.
+
+```{r tidy, echo=FALSE, message=FALSE}
+head(responses, 5)
+```
+
+This data looks pretty tidy (we'll define what that means later), so we don't have to do anything in this step.
+
+## Data transformation
+
+We'll summarize the results to prepare them for visualization. We'll just count the proportion of Apple responses in each column to get a sense for how Apple ownership has changed in the latest phone upgrade cycle and see how it might change in the future.
+
+```{r transform, echo=FALSE, message=FALSE}
+apple_summary <- responses %>% 
+  summarize(Past = sum(previous_phone == "Apple")/n(),
+            Present = sum(current_phone == "Apple")/n(),
+            Future = sum(next_phone == "Apple")/n()
+  ) %>% 
+  pivot_longer(Past:Future, values_to = "Percent", names_to = "When") %>% 
+  mutate(When = factor(When, levels=c("Past", "Present", "Future")))
+apple_summary
+```
+
+## Visualizing the survey data
+
+We'll visualize the data using a chart that with points to show the proportions of Apple users in each ownership cycle.
+
+```{r visualize, echo=FALSE, message=FALSE}
+ggplot(apple_summary, 
+       aes(x = When,
+           y = Percent)) +
+     geom_point() +
+     scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+     labs(y = "Percent Apple Owners", x = "") +
+  theme_minimal()
+```
+
+## Modeling the results
+
+We can understand the overall trend by fitting a linear model to our 3 data points. This is quantitatively meaningless because our times are imprecise, but the linear model gives us a feel for what's going on with Apple device ownership and where it is headed in the future.
+
+```{r model, echo=FALSE, message=FALSE}
+ggplot(apple_summary, 
+       aes(x = When,
+           y = Percent)) +
+     geom_point() +
+     scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+     labs(y = "Percent Apple Owners", x = "") +
+     geom_smooth(aes(x = as.numeric(When)), method = lm, se = FALSE) +
+  theme_minimal()
+```
+

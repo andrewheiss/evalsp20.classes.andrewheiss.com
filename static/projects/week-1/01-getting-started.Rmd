@@ -1,0 +1,76 @@
+---
+title: "Getting Started with R and RStudio"
+output: html_document
+---
+
+```{r setup}
+library(tidyverse)
+
+mtcars <- read_csv("data/mtcars.csv")
+```
+
+## R Markdown
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) file (it has a .Rmd file extension). When you execute code within the file, the results appear beneath the code. 
+
+R code goes in **code chunks**, denoted by three backticks. Try executing this chunk by clicking the *Run* button (a small green triangle) within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter* (or *Cmd+Shift+Enter* on Mac). 
+
+```{r}
+ggplot(data = mtcars) +
+  geom_point(mapping = aes(x = wt, y = mpg), alpha = 0.2)
+```
+
+## Add a new code chunk
+
+Add a new code chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd/Ctrl+Option+I*. 
+
+Put 2 + 2 in your new code chunk and run it.
+
+```{r}
+2 + 2
+```
+
+## Knitting RMarkdown files
+
+We'll use RMarkdown files as notebooks as we learn because we can record text, code, and output. 
+
+RMarkdown files are also a publication format. Try hitting the "Knit" button in the toolbar above. R runs all the code in the document from top to bottom, it collects the output and puts the code, text and output together in an HTML document - you should see it as 01-Getting-started.html in the Files pane. This document is a great way to record or share your work (you can also Knit to PDF or Word documents).
+
+## Assigning variables
+
+What's the difference between the code in this chunk:
+```{r}
+filter(mtcars, cyl == 4)
+```
+
+And the code in this chunk?
+```{r}
+four_cyls <- filter(mtcars, cyl == 4)
+```
+
+## Function syntax
+
+Take a look at this code: 
+
+```{r}
+heights <- pull(.data = starwars, var = height)
+mean(heights, na.rm = TRUE)
+```
+
+1. What functions are being called?
+2. What arguments do they take?
+3. What values are being passed as which arguments?
+
+## Syntax gone wrong
+
+```{r, error=TRUE}
+sd(pull(.data = starwars, var = mass)
+```
+
+```{r, error=TRUE}
+my_name <- "Andrew'
+```
+
+```{r, error=TRUE}
+pull(.data = "starwars", var = height)
+```
