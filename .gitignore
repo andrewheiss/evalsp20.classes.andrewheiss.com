@@ -5,5 +5,5 @@
 .DS_Store
 public/*
 private/*
-resources/_gen/images/*
+resources/_gen/*
 *.zip
