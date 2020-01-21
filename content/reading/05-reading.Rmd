@@ -14,5 +14,6 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
+- <i class="fas fa-podcast"></i> Prologue and at least one of the four acts from [This American Life, "Gardens of Branching Paths," episode #691, January 10, 2020](https://www.thisamericanlife.org/691/gardens-of-branching-paths)
 - <i class="fas fa-book"></i> Chapter 3 in *Impact Evaluation in Practice* [@wb-eval]
 - <i class="fas fa-book"></i> "Potential outcomes causal model" in *Causal Inference: The Mixtape* [@mixtape]
