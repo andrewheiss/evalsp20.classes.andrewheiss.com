@@ -264,7 +264,7 @@ One of the most powerful features of Markdown + pandoc is the ability to automat
     date: "January 13, 2020"
     author: "Your name"
     bibliography: name_of_file.bib
-    csl: "https://raw.githubusercontent.com/citation-style-language/styles/master/apa-6th-edition.csl"
+    csl: "https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl"
     ---
     ```
 
@@ -273,7 +273,7 @@ One of the most powerful features of Markdown + pandoc is the ability to automat
     - [Chicago author-date](https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-author-date.csl)
     - [Chicago note-bibliography](https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-note-bibliography.csl)
     - [Chicago full note-bibliography](https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-fullnote-bibliography.csl) (no shortened notes or ibids)
-    - [APA 6th edition](https://raw.githubusercontent.com/citation-style-language/styles/master/apa-6th-edition.csl)
+    - [APA 7th edition](https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl)
     - [MLA 8th edition](https://raw.githubusercontent.com/citation-style-language/styles/master/modern-language-association.csl)
 
 3. Cite things in your document. [Check the documentation for full details of how to do this](https://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html). Essentially, you use `@citationkey` inside square brackets (`[]`):
