@@ -10,6 +10,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Regression and inference**'
     date: "January 22"
     reading: "02-reading"
+    class: "02-class"
     
   - title: "Problem set 1"
     date: "January 22"

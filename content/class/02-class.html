@@ -24,6 +24,14 @@ editor_options:
 <div id="TOC">
 <ul>
 <li><a href="#slides">Slides</a></li>
+<li><a href="#r-stuff">R stuff</a></li>
+<li><a href="#different-styles-of-formulas">Different styles of formulas</a>
+<ul>
+<li><a href="#r-code">R code</a></li>
+<li><a href="#mastering-metrics-and-econometrics-in-general"><em>Mastering ’Metrics</em> and econometrics in general</a></li>
+<li><a href="#all-betas">All <span class="math inline">\(\beta\)</span>s</a></li>
+<li><a href="#use-real-names">Use real names</a></li>
+</ul></li>
 <li><a href="#clearest-and-muddiest-things">Clearest and muddiest things</a></li>
 </ul>
 </div>
@@ -31,6 +39,82 @@ editor_options:
 <div id="slides" class="section level2">
 <h2>Slides</h2>
 {{% slides %}}
+</div>
+<div id="r-stuff" class="section level2">
+<h2>R stuff</h2>
+<p>Download all the R stuff we did today if you want to try it on your own computer: <a href="/projects/week-2.zip"><i class="fas fa-file-archive"></i> <code>week2.zip</code></a></p>
+</div>
+<div id="different-styles-of-formulas" class="section level2">
+<h2>Different styles of formulas</h2>
+<p>There’s unfortunately no standard notation for regression model math. Since everyone does it differently, here’s a brief guide to translating between different forms. I’ll write two different models in a bunch of different ways. The models come from chapter 2 of <em>Mastering ’Metrics</em> where they estimated the effect of private university on earnings:</p>
+<ul>
+<li>Simple: Earnings ~ Public/private + Group A/Not group A</li>
+<li>Complex: Earnings ~ Public/private + Group A/Not group A + SAT score + Parental income</li>
+</ul>
+<div id="r-code" class="section level3">
+<h3>R code</h3>
+<p>When specifying a model with R, you don’t need to worry about Greek letters (or any coefficient letters really), since the point of running the model is to find what the actual values of those letters would be.
+The code for these two models would look something like this:</p>
+<pre class="r"><code>model_simple &lt;- lm(earnings ~ private + group_a, data = schools)
+model_complex &lt;- lm(log(earnings) ~ private + group_a + sat_score + parental_income,
+                    data = schools)</code></pre>
+</div>
+<div id="mastering-metrics-and-econometrics-in-general" class="section level3">
+<h3><em>Mastering ’Metrics</em> and econometrics in general</h3>
+<p>In <em>Mastering ’Metrics</em>, Angrist and Pischke like to use lots of different Greek letters to help distinguish between the different parts of a model. For instance, Equation 2.1 on page 57 is</p>
+<p><span class="math display">\[
+Y_i = \alpha + \beta P_i + \gamma A_i + e_i
+\]</span></p>
+<p>Here’s what all these things mean:</p>
+<ul>
+<li><span class="math inline">\(\alpha\)</span> (“alpha”) is the intercept</li>
+<li><span class="math inline">\(\beta\)</span> (“beta”) is the coefficient just for the <em>treatment</em>, or the causal effect we care about (i.e. the effect of private school)</li>
+<li><span class="math inline">\(\gamma\)</span> (“gamma”) is the coefficient for the <em>identifying variable</em>, or the thing that simulates treatment and control groups (i.e. being in group A or not).</li>
+<li><span class="math inline">\(e\)</span> (“epsilon”) is the error term, or the residuals (i.e. things that aren’t captured by the model)</li>
+<li><span class="math inline">\(Y\)</span> represents earnings, or the outcome variable (or dependent variable)</li>
+<li><span class="math inline">\(P\)</span> represents private schools</li>
+<li><span class="math inline">\(A\)</span> represents being in Group A</li>
+</ul>
+<p>Each of these terms has a subscripted <em>i</em> to show that the model is being fit for individuals, not groups. It’s more of an esoteric point and we don’t care much about that distinction for this class.</p>
+<p>For the more complex model, Angrist and Pischke use Equation 2.2 on page 61:</p>
+<p><span class="math display">\[
+\ln Y_i = \alpha + \beta P_i + \gamma A_i + \delta_1 \text{SAT}_i + \delta_2 \text{PI}_i + e_i
+\]</span></p>
+<p>The alpha, beta, and gamma terms are all the same as before (intercept, treatment coefficient, idenfication coefficient), but there are some new pieces:</p>
+<ul>
+<li><span class="math inline">\(\delta_1\)</span>, <span class="math inline">\(\delta_2\)</span>, etc. (“delta”): the coefficients for all other control variables</li>
+<li>SAT is for SAT scores</li>
+<li>PI is for parental income</li>
+</ul>
+</div>
+<div id="all-betas" class="section level3">
+<h3>All <span class="math inline">\(\beta\)</span>s</h3>
+<p>My preferred method is to not distinguish between the different types of coefficients (i.e. beta vs. gamma vs. delta) and just call everything beta. Here’s what the two models look like when written this way:</p>
+<p><span class="math display">\[
+\begin{aligned}
+Y =&amp; \beta_0 + \beta_1 P + \beta_2 A + \epsilon \\
+\ln Y =&amp; \beta_0 + \beta_1 P + \beta_2 A + \beta_3 \text{SAT} + \beta_4 \text{PI} + \epsilon
+\end{aligned}
+\]</span></p>
+<p>You’ll sometimes see the intercept <span class="math inline">\(\beta_0\)</span> written as <span class="math inline">\(\alpha\)</span>, which is fine—just start with <span class="math inline">\(\beta_1\)</span>:</p>
+<p><span class="math display">\[
+\begin{aligned}
+Y =&amp; \alpha + \beta_1 P + \beta_2 A + \epsilon \\
+\ln Y =&amp; \alpha + \beta_1 P + \beta_2 A + \beta_3 \text{SAT} + \beta_4 \text{PI} + \epsilon
+\end{aligned}
+\]</span></p>
+</div>
+<div id="use-real-names" class="section level3">
+<h3>Use real names</h3>
+<p>If you’re not constrained with space, feel free to use actual words instead of things like <span class="math inline">\(P\)</span>, <span class="math inline">\(A\)</span>, or <span class="math inline">\(PI\)</span>:</p>
+<p><span class="math display">\[
+\begin{aligned}
+Y =&amp; \beta_0 + \beta_1 \text{Private} + \beta_2 \text{Group A} + \epsilon \\
+\ln Y =&amp; \beta_0 + \beta_1 \text{Private} + \beta_2 \text{Group A} + \\
+&amp; \beta_3 \text{SAT score} + \beta_4 \text{Parental income} + \epsilon
+\end{aligned}
+\]</span></p>
+</div>
 </div>
 <div id="clearest-and-muddiest-things" class="section level2">
 <h2>Clearest and muddiest things</h2>

@@ -1,0 +1,94 @@
+---
+title: "Models"
+output: html_document
+---
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)  # For ggplot, dplyr, and friends
+library(broom)      # To convert models into data frames
+```
+
+# Cookies
+
+First we'll generate some fake data about cookies and happiness:
+
+```{r make-cookie-data}
+cookies_data <- tribble(
+  ~happiness, ~cookies,
+  0.5, 1,
+  2.0, 2,
+  1.0, 3,
+  2.5, 4,
+  3.0, 5,
+  1.5, 6,
+  2.0, 7,
+  2.5, 8,
+  2.0, 9,
+  3.0, 10,
+)
+```
+
+```{r plot-cookie-data}
+ggplot(cookies_data, aes(x = cookies, y = happiness)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Cookies eaten", y = "Happiness", 
+       title = "Relationship between cookies and happiness")
+```
+
+```{r build-cookie-model}
+cookies_model <- lm(happiness ~ cookies, data = cookies_data)
+```
+
+We can see what's in the `cookies_model` object by summarizing it with `summary()`:
+
+```{r summarize-model}
+summary(cookies_model)
+```
+
+But this is ugly and it's hard to extract the numbers from that text. It's easier to convert the model results into a data frame, or a table that R can work with. `tidy()` will convert all the coefficients into a table; `glance()` will convert all the diagnostics (R², F-statistic, etc.) into a table:
+
+```{r tidy-model-stuff}
+tidy(cookies_model, conf.int = TRUE)
+glance(cookies_model)
+```
+
+
+# World happiness
+
+```{r}
+world_happiness <- read_csv("data/world_happiness.csv")
+```
+
+
+```{r}
+model1 <- lm(happiness_score ~ life_expectancy, data = world_happiness)
+tidy(model1)
+```
+
+```{r}
+ggplot(world_happiness, aes(x = life_expectancy, y = happiness_score)) +
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+
+```{r}
+model2 <- lm(happiness_score ~ region, data = world_happiness)
+
+tidy(model2)
+```
+
+```{r}
+model_life_school <- lm(happiness_score ~ life_expectancy + school_enrollment, 
+                        data = world_happiness)
+
+tidy(model_life_school)
+```
+
+```{r}
+model_life_school_region <- lm(happiness_score ~ life_expectancy + 
+                                 school_enrollment + region, 
+                               data = world_happiness)
+
+tidy(model_life_school_region)
+```

@@ -25,6 +25,181 @@ editor_options:
 `r blogdown::shortcode("slides")`
 
 
+## R stuff
+
+Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week2.zip`](/projects/week-2.zip)
+
+
+## Different styles of formulas
+
+There's unfortunately no standard notation for regression model math. Since everyone does it differently, here's a brief guide to translating between different forms. I'll write two different models in a bunch of different ways. The models come from chapter 2 of *Mastering 'Metrics* where they estimated the effect of private university on earnings:
+
+- Simple: Earnings ~ Public/private + Group A/Not group A
+- Complex: Earnings ~ Public/private + Group A/Not group A + SAT score + Parental income
+
+### R code
+
+When specifying a model with R, you don't need to worry about Greek letters (or any coefficient letters really), since the point of running the model is to find what the actual values of those letters would be. 
+The code for these two models would look something like this:
+
+```{r eval=FALSE}
+model_simple <- lm(earnings ~ private + group_a, data = schools)
+model_complex <- lm(log(earnings) ~ private + group_a + sat_score + parental_income,
+                    data = schools)
+```
+
+### *Mastering 'Metrics* and econometrics in general
+
+In *Mastering 'Metrics*, Angrist and Pischke like to use lots of different Greek letters to help distinguish between the different parts of a model. For instance, Equation 2.1 on page 57 is
+
+$$
+Y_i = \alpha + \beta P_i + \gamma A_i + e_i
+$$
+
+Here's what all these things mean: 
+
+- $\alpha$ ("alpha") is the intercept
+- $\beta$ ("beta") is the coefficient just for the *treatment*, or the causal effect we care about (i.e. the effect of private school)
+- $\gamma$ ("gamma") is the coefficient for the *identifying variable*, or the thing that simulates treatment and control groups (i.e. being in group A or not). 
+- $e$ ("epsilon") is the error term, or the residuals (i.e. things that aren't captured by the model)
+- $Y$ represents earnings, or the outcome variable (or dependent variable)
+- $P$ represents private schools
+- $A$ represents being in Group A
+
+Each of these terms has a subscripted *i* to show that the model is being fit for individuals, not groups. It's more of an esoteric point and we don't care much about that distinction for this class.
+
+For the more complex model, Angrist and Pischke use Equation 2.2 on page 61:
+
+$$
+\ln Y_i = \alpha + \beta P_i + \gamma A_i + \delta_1 \text{SAT}_i + \delta_2 \text{PI}_i + e_i
+$$
+
+The alpha, beta, and gamma terms are all the same as before (intercept, treatment coefficient, idenfication coefficient), but there are some new pieces:
+
+- $\delta_1$, $\delta_2$, etc. ("delta"): the coefficients for all other control variables
+- SAT is for SAT scores
+- PI is for parental income
+
+### All $\beta$s
+
+My preferred method is to not distinguish between the different types of coefficients (i.e. beta vs. gamma vs. delta) and just call everything beta. Here's what the two models look like when written this way:
+
+$$
+\begin{aligned}
+Y =& \beta_0 + \beta_1 P + \beta_2 A + \epsilon \\
+\ln Y =& \beta_0 + \beta_1 P + \beta_2 A + \beta_3 \text{SAT} + \beta_4 \text{PI} + \epsilon
+\end{aligned}
+$$
+
+You'll sometimes see the intercept $\beta_0$ written as $\alpha$, which is fine—just start with $\beta_1$:
+
+$$
+\begin{aligned}
+Y =& \alpha + \beta_1 P + \beta_2 A + \epsilon \\
+\ln Y =& \alpha + \beta_1 P + \beta_2 A + \beta_3 \text{SAT} + \beta_4 \text{PI} + \epsilon
+\end{aligned}
+$$
+
+### Use real names
+
+If you're not constrained with space, feel free to use actual words instead of things like $P$, $A$, or $PI$:
+
+$$
+\begin{aligned}
+Y =& \beta_0 + \beta_1 \text{Private} + \beta_2 \text{Group A} + \epsilon \\
+\ln Y =& \beta_0 + \beta_1 \text{Private} + \beta_2 \text{Group A} + \\
+& \beta_3 \text{SAT score} + \beta_4 \text{Parental income} + \epsilon
+\end{aligned}
+$$
+
+
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r class-stuff, include=FALSE, eval=FALSE}
+# https://github.com/johnmyleswhite/ML_for_Hackers/blob/master/02-Exploration/data/01_heights_weights_genders.csv
+# Height-Weight data from *Machine Learning for Hackers*
+
+library(tidyverse)
+library(broom)
+library(here)
+
+wts <- read_csv(here("static", "data", "heights_weights_genders.csv"))
+
+cor(wts$Height, wts$Weight)
+
+ggplot(wts, aes(x = Weight, y = Height, color = Gender)) +
+  geom_point()
+
+eg <- tribble(
+  ~x, ~y, ~size, ~x1,
+  "A", 1, 5, 1,
+  "B", 1, 10, 2,
+  "C", 1, 15, 3
+)
+
+ggplot(eg, aes(x = x, y = y, color = x)) +
+  geom_point(size = 30) +
+  guides(color = FALSE) +
+  theme(axis.text.y = element_blank())
+
+ggplot(eg, aes(x = x, y = y, fill = x)) +
+  geom_point(size = 30, pch = 21, stroke = 5) +
+  guides(fill = FALSE) +
+  theme(axis.text.y = element_blank())
+
+ggplot(eg, aes(x = x1, y = y, color = x1)) +
+  geom_point(size = 30) +
+  guides(color = FALSE) +
+  coord_cartesian(xlim = c(0.5, 3.5)) +
+  theme(axis.text.y = element_blank())
+
+
+ggplot(eg, aes(x = x, y = y, shape = x)) +
+  geom_point(size = 30) +
+  guides(shape = FALSE) +
+  theme(axis.text.y = element_blank())
+
+ggplot(eg, aes(x = x, y = y, alpha = x)) +
+  geom_point(size = 30) +
+  guides(alpha = FALSE) +
+  theme(axis.text.y = element_blank())
+
+ggplot(eg, aes(x = x, y = y, size = x)) +
+  geom_point() +
+  scale_size_discrete(range = c(10, 50)) +
+  guides(size = FALSE) +
+  theme(axis.text.y = element_blank())
+
+
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+
+cookies_data <- tribble(
+  ~happiness, ~cookies,
+  0.5, 1,
+  2.0, 2,
+  1.0, 3,
+  2.5, 4,
+  3.0, 5,
+  1.5, 6,
+  2.0, 7,
+  2.5, 8,
+  2.0, 9,
+  3.0, 10,
+)
+
+ggplot(cookies_data, aes(x = cookies, y = happiness)) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(x = "Cookies eaten", y = "Happiness", title = "Relationship between cookies and happiness")
+
+cookies_model <- lm(happiness ~ cookies, data = cookies_data)
+
+summary(cookies_model)
+tidy(cookies_model, conf.int = TRUE)
+glance(cookies_model)
+```
+
