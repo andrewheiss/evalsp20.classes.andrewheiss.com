@@ -17,5 +17,68 @@ editor_options:
 ---
 
 
+<div id="TOC">
+<ul>
+<li><a href="#instructions">Instructions</a></li>
+<li><a href="#dag-i">1: DAG I</a></li>
+<li><a href="#dag-ii">2: DAG II</a></li>
+<li><a href="#dag-for-your-program">3: DAG for your program</a></li>
+</ul>
+</div>
 
-<p>The instructions for this assignment will go live 2 weeks before the deadline.</p>
+<p>For your <a href="/assignment/final-project/">final project</a>, you will conduct an evaluation for a social program of your choosing. In this assignment, you will decide how to model the causal effect of your program on your primary outcome.</p>
+<p>If you decide to use a different program for your final project, that’s okay! This assignment doesn’t have to be related to your final program, but it would be extraordinarily helpful—a more polished version of this assignment can be included as part of your final project.</p>
+<div id="instructions" class="section level2">
+<h2>Instructions</h2>
+<p>You need to complete the three sections listed below. Ideally you should type this in R Markdown and knit your document to HTML or Word or PDF, but you can also write in Word if you want (though your final project will need to be in R Markdown, and this would give you practice).</p>
+<p>I’ve created an R Markdown template you can use here: <a href="/projects/causal-model.zip"><i class="fas fa-file-archive"></i> <code>causal-model.zip</code></a>. It’s also <a href="https://rstudio.cloud/spaces/44864/project/878851">available on RStudio.cloud</a>.</p>
+<p><strong>Submit this assignment as a PDF or Word file on iCollege.</strong></p>
+<hr />
+</div>
+<div id="dag-i" class="section level2">
+<h2>1: DAG I</h2>
+<p>Find a news article that makes a causal claim and interpret that claim by drawing an appropriate diagram. The article likely won’t explain all the things the researchers controlled for, so you’ll need to create an ideal DAG. What should be included in the causal process to measure the effect of X on Y?</p>
+<p>Export the figure from dagitty and include it in your assignment, or use this code to draw the DAG with R:</p>
+<pre class="r"><code>library(tidyverse)
+library(ggdag)
+
+# Remember that you can change the variable names here--they can be basically
+# anything, but cannot include spaces. The labels can have spaces. Adjust the
+# variable names (y, x2, etc) and labels (&quot;Outcome&quot;, &quot;Something&quot;, etc.) as
+# necessary.
+my_dag &lt;- dagify(y ~ x1 + x2 + z,
+                 z ~ x1, 
+                 x2 ~ x1 + z,
+                 labels = c(&quot;y&quot; = &quot;Outcome&quot;,
+                            &quot;x1&quot; = &quot;Something&quot;,
+                            &quot;x2&quot; = &quot;Something else&quot;,
+                            &quot;z&quot; = &quot;Yet another thing&quot;),
+                 exposure = &quot;z&quot;,
+                 outcome = &quot;y&quot;)
+
+# If you set text = TRUE, you&#39;ll see the variable names in the DAG points
+# The `seed` argument makes it so that the random layout is the same every time
+ggdag(my_dag, text = FALSE, use_labels = &quot;label&quot;, seed = 1234) + 
+  theme_dag()
+
+# If you want the treatment and outcomes colored differently, 
+# replace ggdag() with ggdag_status()
+ggdag_status(my_dag, text = FALSE, use_labels = &quot;label&quot;, seed = 1234) + 
+  theme_dag() +
+  theme(legend.position = &quot;bottom&quot;)  # Move legend to bottom for fun</code></pre>
+<p>Summarize the causal claim. Describe what the authors controlled for and what else you included in the DAG. Justify the inclusion of each node (point) and connection (line) in the graph. <em>(≈150 words)</em></p>
+<p>Identify all the frontdoor and backdoor paths between your exposure and outcome. What variables need to be controlled for / adjusted to close the backdoors? Did this happen in the study or article? <em>(≈100 words)</em></p>
+</div>
+<div id="dag-ii" class="section level2">
+<h2>2: DAG II</h2>
+<p>Find a different news article with a causal claim and do the same thing as above.</p>
+<p>Draw and include a DAG.</p>
+<p>Summarize the causal claim. Describe what the authors controlled for and what else you included in the DAG. Justify the inclusion of each node (point) and connection (line) in the graph. <em>(≈150 words)</em></p>
+<p>Identify all the frontdoor and backdoor paths between your exposure and outcome. What variables need to be controlled for / adjusted to close the backdoors? Did this happen in the study or article? <em>(≈100 words)</em></p>
+</div>
+<div id="dag-for-your-program" class="section level2">
+<h2>3: DAG for your program</h2>
+<p>Identify the outcome you care most about from your final project program. Draw a DAG that shows the causal effect of your program’s intervention on the outcome.</p>
+<p>Summarize the causal claim. Describe what needs to be controlled for and what else you included in the DAG. Justify the inclusion of each node (point) and connection (line) in the graph. <em>(≈150 words)</em></p>
+<p>Identify all the frontdoor and backdoor paths between your exposure and outcome. What variables need to be controlled for / adjusted to close the backdoors? How might you do this with your evaluation? <em>(≈100 words)</em></p>
+</div>
