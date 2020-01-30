@@ -61,7 +61,9 @@ mutate(gapminder, gdp = gdpPercap * pop)
 
 mutate(gapminder, africa = continent == "Africa")
 mutate(gapminder, log_gdpPercap = log(gdpPercap))
-mutate(gapminder, africa_asia = ifelse(continent %in% c("Africa", "Asia"), "Africa or Asia", "Not Africa or Asia"))
+mutate(gapminder, africa_asia = ifelse(continent %in% c("Africa", "Asia"), 
+                                       "Africa or Asia", 
+                                       "Not Africa or Asia"))
 
 mutate(gapminder, after_1960 = ifelse(year > 1960, TRUE, FALSE))
 mutate(gapminder, 
@@ -103,6 +105,8 @@ gapminder %>%
   filter(continent == "Africa", year == 2007) %>%
   summarise(n_countries = n_distinct(country), 
             med_le = median(lifeExp))
+
+
 
 gapminder %>% group_by(continent)
 
