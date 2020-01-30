@@ -14,17 +14,108 @@ menu:
     weight: 3
 type: docs
 weight: 3
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
-editor_options: 
+pdf: "/slides/PMAP-8521_2020-01-29.pdf"
+thumb: "/slides/PMAP-8521_2020-01-29.png"
+editor_options:
   chunk_output_type: console
 ---
 
-### Slides
+## Slides
 
 `r blogdown::shortcode("slides")`
+
+
+## R stuff
+
+Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week-3.zip`](/projects/week-3.zip)
 
 
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r class-stuff, eval=FALSE, include=FALSE}
+library(tidyverse)
+library(gapminder)
+
+filter(gapminder, country == "Denmark")
+
+filter(gapminder, country == "Canada")
+
+filter(gapminder, continent == "Oceania")
+
+filter(gapminder, lifeExp > 82)
+
+filter(gapminder, country == "Canada", year < 1970)
+filter(gapminder, year == 2007, lifeExp < 50)
+filter(gapminder, year == 2007, lifeExp < 50, !(continent == "Africa"))
+filter(gapminder, year == 2007, lifeExp < 50, 
+       continent != "Africa")
+
+
+filter(gapminder, country == "Mexico" | country == "Canada" | country == "United States")
+filter(gapminder, country %in% c("Mexico", "Canada", "United States"))
+
+mutate(gapminder, gdp = gdpPercap * pop)
+
+mutate(gapminder, africa = continent == "Africa")
+mutate(gapminder, log_gdpPercap = log(gdpPercap))
+mutate(gapminder, africa_asia = ifelse(continent %in% c("Africa", "Asia"), "Africa or Asia", "Not Africa or Asia"))
+
+mutate(gapminder, after_1960 = ifelse(year > 1960, TRUE, FALSE))
+mutate(gapminder, 
+       after_1960 = ifelse(year > 1960, 
+                           "After 1960", 
+                           "Before 1960"))
+
+gapminder_2002 <- filter(gapminder, year == 2002)
+gapminder_2002_logged <- mutate(gapminder_2002, log_gdpPercap = log(gdpPercap))
+
+filter(mutate(gapminder_2002, log_gdpPercap = log(gdpPercap)), year == 2002)
+
+gapminder %>% filter(_______, country == "Canada")
+
+filter(gapminder, country == "Canada")
+gapminder %>% filter(country == "Canada")
+
+gapminder %>% 
+  filter(year == 2002) %>% 
+  mutate(log_gdpPercap = log(gdpPercap))
+
+leave_house(get_dressed(get_out_of_bed(wake_up(me, time = "8:00"), side = "correct"), pants = TRUE, shirt = TRUE), car = TRUE, bike = FALSE)
+
+me %>% 
+  wake_up(time = "8:00") %>% 
+  get_out_of_bed(side = "correct") %>% 
+  get_dressed(pants = TRUE, shirt = TRUE) %>% 
+  leave_house(car = TRUE, bike = FALSE)
+
+leave_house(get_dressed(get_out_of_bed(wake_up(me, time = "8:00"), side = "correct"), pants = TRUE, shirt = TRUE), car = TRUE, bike = FALSE)
+
+gapminder %>% 
+  summarize(first = min(year),
+            last = max(year),
+            num_rows = n(),
+            num_unique = n_distinct(country))
+
+gapminder %>%
+  filter(continent == "Africa", year == 2007) %>%
+  summarise(n_countries = n_distinct(country), 
+            med_le = median(lifeExp))
+
+gapminder %>% group_by(continent)
+
+gapminder %>% 
+  group_by(continent) %>% 
+  summarize(min_le = min(lifeExp),
+            max_le = max(lifeExp),
+            med_le = median(lifeExp))
+
+gapminder %>% 
+  filter(year == 2007) %>% 
+  group_by(continent) %>% 
+  summarize(min_le = min(lifeExp),
+            max_le = max(lifeExp),
+            med_le = median(lifeExp))
+```

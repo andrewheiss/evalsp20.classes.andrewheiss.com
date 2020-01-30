@@ -19,6 +19,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Theories of change and logic models**'
     date: "January 29"
     reading: "03-reading"
+    class: "03-class"
 
   - title: "Problem set 2"
     date: "January 29"
