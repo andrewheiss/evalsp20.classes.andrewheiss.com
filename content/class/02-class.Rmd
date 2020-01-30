@@ -27,7 +27,7 @@ editor_options:
 
 ## R stuff
 
-Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week2.zip`](/projects/week-2.zip)
+Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week-2.zip`](/projects/week-2.zip)
 
 
 ## Different styles of formulas
