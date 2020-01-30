@@ -1,5 +1,5 @@
 ---
-title: Installing R, RStudio, and tidyverse
+title: Installing R, RStudio, tidyverse, and tinytex
 date: "2019-12-17"
 menu:
   reference:
@@ -21,6 +21,7 @@ output:
 <li><a href="#install-r">Install R</a></li>
 <li><a href="#install-rstudio">Install RStudio</a></li>
 <li><a href="#install-tidyverse">Install <code>tidyverse</code></a></li>
+<li><a href="#install-tinytex">Install <code>tinytex</code></a></li>
 </ul></li>
 </ul>
 </div>
@@ -70,6 +71,18 @@ output:
 <p>Go to the packages panel in RStudio, click on “Install,” type “tidyverse”, and press enter. You’ll see a bunch of output in the RStudio console as all the tidyverse packages are installed.</p>
 <p><img src="/img/install/install-r-tidyverse.png" width="60%" /></p>
 <p>Notice also that RStudio will generate a line of code for you and run it: <code>install.packages("tidyverse")</code>. You can also just paste and run this instead of using the packages panel.</p>
+</div>
+<div id="install-tinytex" class="section level3">
+<h3>Install <code>tinytex</code></h3>
+<p>When you knit to PDF, R uses a special scientific typesetting program named LaTeX (pronounced “lay-tek” or “lah-tex”; for goofy nerdy reasons, the x is technically the “ch” sound in “Bach”, but most people just say it as “k”—saying “layteks” is frowned on for whatever reason).</p>
+<p>LaTeX is neat and makes pretty documents, but it’s a huge program—<a href="https://tug.org/mactex/mactex-download.html">the macOS version, for instance, is nearly 4 GB</a>! To make life easier, there’s <a href="https://yihui.org/tinytex/">an R package named <strong>tinytex</strong></a> that installs a minimal LaTeX program and that automatically deals with differences between macOS and Windows.</p>
+<p>Here’s how to install <strong>tinytex</strong> so you can knit to pretty PDFs:</p>
+<ol style="list-style-type: decimal">
+<li>Use the Packages in panel in RStudio to install <strong>tinytex</strong> like you did above with <strong>tidyverse</strong>. Alternatively, run <code>install.packages("tinytex")</code> in the console.</li>
+<li>Run <code>tinytex::install_tinytex()</code> in the console.</li>
+<li>Wait for a bit while R downloads and installs everything you need.</li>
+<li>The end! You should now be able to knit to PDF.</li>
+</ol>
 </div>
 </div>
 <div class="footnotes">
