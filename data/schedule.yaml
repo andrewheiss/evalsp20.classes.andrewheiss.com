@@ -28,6 +28,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Measurement and DAGs**'
     date: "February 5"
     reading: "04-reading"
+    class: "04-class"
 
   - title: "Evaluation: Background and theory"
     date: "February 5"
