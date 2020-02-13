@@ -25,6 +25,58 @@ editor_options:
 `r blogdown::shortcode("slides")`
 
 
+## R stuff
+
+Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week-5.zip`](/projects/week-5.zip)
+
+
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r class-stuff, include=FALSE, eval=FALSE}
+library(tidyverse)
+library(ggdag)
+library(dagitty)
+
+dag <- dagify(Y ~ X + Z,
+              # X ~ Z,
+              coords = list(
+                x = c(X = 1, Y = 2, Z = 1.5),
+                y = c(X = 1, Y = 1, Z = 2)
+              ),
+              labels = c(Y = "Malaria infection rate", 
+                         X = "Mosquito nets", 
+                         Z = "Nighttime temperatures"),
+              exposure = "X",
+              outcome = "Y") %>% tidy_dagitty()
+
+ggplot(dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges() +
+  geom_dag_point() +
+  geom_dag_text() +
+  geom_dag_label_repel(aes(label = label), nudge_y = 0.1, seed = 1234) +
+  theme_dag()
+
+front <- dagify(C ~ T + G,
+                T ~ S,
+                S ~ G,
+                coords = list(
+                  x = c(S = 1, T = 2, C = 3, G = 2),
+                  y = c(S = 1, T = 1, C = 1, G = 2)
+                ),
+                labels = c(S = "Smoking", 
+                           T = "Tar", 
+                           C = "Cancer",
+                           G = "Genetics"),
+                exposure = "S",
+                outcome = "C") %>% tidy_dagitty()
+
+ggplot(front, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges() +
+  geom_dag_point() +
+  geom_dag_text() +
+  geom_dag_label_repel(aes(label = label), nudge_y = 0.1, seed = 1234) +
+  theme_dag()
+```

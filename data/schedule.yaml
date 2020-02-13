@@ -37,6 +37,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **DAGs and potential outcomes**'
     date: "February 12"
     reading: "05-reading"
+    class: "05-class"
 
   - title: "Evaluation: Measurement"
     date: "February 12"

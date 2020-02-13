@@ -1,0 +1,78 @@
+---
+title: "DAGs"
+output: html_document
+---
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggdag)
+library(dagitty)
+```
+
+```{r}
+edu_earn_dag <- dagify(Earn ~ Edu + Year + Bkgd + Loc + JobCx,
+                       Edu ~ Req + Loc + Bkgd + Year,
+                       JobCx ~ Edu,
+                       Bkgd ~ U1,
+                       Loc ~ U1,
+                       exposure = "Edu",
+                       outcome = "Earn",
+                       latent = "U1",
+                       labels = c("Earn" = "Earnings", "Edu" = "Education",
+                                  "Year" = "Year", "Bkgd" = "Background",
+                                  "Loc" = "Location", "JobCx" = "Job connections",
+                                  "U1" = "Unobserved stuff"))
+
+ggdag(edu_earn_dag)
+ggdag(edu_earn_dag, use_labels = "label")
+ggdag_status(edu_earn_dag)
+ggdag_status(edu_earn_dag, use_labels = "label", text = FALSE)
+paths(edu_earn_dag)
+ggdag_paths(edu_earn_dag, shadow = TRUE)
+ggdag_adjustment_set(edu_earn_dag, shadow = TRUE)
+```
+
+```{r warning=FALSE, message=FALSE}
+library(causaleffect)
+library(igraph)
+library(latex2exp)
+
+simple_dag <- graph.formula(y +- z, 
+                            y +- x, 
+                            x +- z)
+plot(simple_dag)
+```
+
+```{r}
+adjustments_simple <- causal.effect(y = "y", x = "x", G = simple_dag, expr = TRUE)
+plot(TeX(adjustments_simple))
+```
+
+```{r}
+class_dag <- graph.formula(Earn +- Edu,
+                           Earn +- Year,
+                           Earn +- Bkgd,
+                           Earn +- Loc,
+                           Earn +- JobCx,
+                           Edu +- Year,
+                           Edu +- Bkgd,
+                           Edu +- Loc,
+                           Edu +- Req,
+                           JobCx +- Edu,
+                           Loc +- U1,
+                           Bkgd +- U1,
+                           simplify = TRUE)
+class_dag
+
+# Make all the edges that involve U1 unobserved
+class_dag_u <- set.edge.attribute(class_dag, "description", c(11, 12), "U")
+
+# Kitchen sink adjustment
+adjustments_full <- causal.effect(y = "Earn", x = "Edu", G = class_dag_u, expr = TRUE)
+plot(TeX(adjustments_full))
+
+# Simpler adjustment
+adjustments <- causal.effect(y = "Earn", x = "Edu", G = class_dag_u, expr = TRUE, simp = TRUE)
+plot(TeX(adjustments))
+```
+
