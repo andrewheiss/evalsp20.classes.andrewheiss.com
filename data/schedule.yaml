@@ -46,6 +46,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Threats to validity**'
     date: "February 19"
     reading: "06-reading"
+    class: "06-class"
 
   - title: "Evaluation: Causal model"
     date: "February 19"

@@ -14,8 +14,8 @@ menu:
     weight: 6
 type: docs
 weight: 6
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
+pdf: /slides/PMAP-8521_2020-02-19.pdf
+thumb: /slides/PMAP-8521_2020-02-19.png
 editor_options: 
   chunk_output_type: console
 ---
