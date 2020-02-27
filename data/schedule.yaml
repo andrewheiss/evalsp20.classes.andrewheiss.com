@@ -61,6 +61,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Randomization and matching**'
     date: "February 26"
     reading: "07-reading"
+    class: "07-class"
 
   - title: "Evaluation: Threats to validity"
     date: "February 26"

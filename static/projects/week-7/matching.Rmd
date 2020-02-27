@@ -1,0 +1,190 @@
+---
+title: "Matching and weighting"
+output: html_document
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggdag)
+library(broom)
+library(MatchIt)
+
+math_camp <- read_csv("data/math_camp.csv")
+```
+
+## DAG
+
+```{r}
+node_details <- tribble(
+  ~name, ~label, ~x, ~y,
+  "math_camp", "Math camp", 2, 1,
+  "final_grade", "Final grade", 4, 1,
+  "needs_camp", "Needs camp", 1, 2,
+  "gre_quant", "GRE quantitative", 2.5, 2,
+  "gre_verbal", "GRE verbal", 5, 2,
+  "background", "Background", 2, 3,
+  "undergraduate_gpa", "Undergraduate GPA", 4, 3
+)
+
+node_labels <- node_details$label
+names(node_labels) <- node_details$name
+
+math_camp_dag <- dagify(final_grade ~ math_camp + gre_quant + gre_verbal + 
+                          undergraduate_gpa + background,
+                        math_camp ~ needs_camp, 
+                        needs_camp ~ background + undergraduate_gpa + gre_quant,
+                        gre_quant ~ background + undergraduate_gpa,
+                        gre_verbal ~ background + undergraduate_gpa,
+                        undergraduate_gpa ~ background,
+                        exposure = "math_camp",
+                        outcome = "final_grade",
+                        latent = "background",
+                        coords = node_details,
+                        labels = node_labels)
+
+ggdag_status(math_camp_dag, use_labels = "label", text = FALSE) + 
+  theme_dag()
+```
+
+We can also use a DAG without the "needs camp" node
+
+```{r}
+node_details_simpler <- tribble(
+  ~name, ~label, ~x, ~y,
+  "math_camp", "Math camp", 2, 1,
+  "final_grade", "Final grade", 4, 1,
+  "gre_quant", "GRE quantitative", 2.5, 2,
+  "gre_verbal", "GRE verbal", 5, 2,
+  "undergraduate_gpa", "Undergraduate GPA", 4, 3
+)
+
+node_labels_simpler <- node_details_simpler$label
+names(node_labels_simpler) <- node_details_simpler$name
+
+math_camp_dag_simpler <- dagify(final_grade ~ math_camp + gre_quant + gre_verbal + 
+                                  undergraduate_gpa,
+                                math_camp ~ undergraduate_gpa + gre_quant,
+                                gre_quant ~ undergraduate_gpa,
+                                gre_verbal ~ undergraduate_gpa,
+                                exposure = "math_camp",
+                                outcome = "final_grade",
+                                coords = node_details,
+                                labels = node_labels)
+
+ggdag_status(math_camp_dag_simpler, use_labels = "label", text = FALSE) + 
+  theme_dag()
+```
+
+
+## Incorrect “correlation is not causation” estimate
+
+```{r}
+math_camp %>% 
+  group_by(math_camp) %>% 
+  summarize(avg = mean(final_grade))
+```
+
+```{r}
+model_wrong <- lm(final_grade ~ math_camp, data = math_camp)
+tidy(model_wrong)
+```
+
+
+## Adjustment using educated-guess-based naive matching
+
+```{r}
+ggplot(math_camp, aes(x = gre_quant, fill = math_camp)) +
+  geom_histogram(binwidth = 2, color = "white") + 
+  guides(fill = FALSE) +
+  facet_wrap(vars(math_camp), ncol = 1) +
+  theme_light()
+```
+
+145 seems to be a fairly visible cutoff. Let's guess that people who scored under 145 need the camp
+
+```{r}
+math_camp_guessed_need <- math_camp %>% 
+  mutate(maybe_needs_camp = gre_quant < 145)
+
+model_adj_needs_camp_guess <- lm(final_grade ~ math_camp + maybe_needs_camp, 
+                                 data = math_camp_guessed_need)
+tidy(model_adj_needs_camp_guess)
+```
+
+## Adjustment using inverse probability weighting (IPW)
+
+To make adjustments with IPW, we have to first build a model that predicts treatment using the confounders and other arrows going into math camp. Here we use logistic regression:
+
+```{r}
+needs_camp_model <- glm(math_camp ~ undergrad_gpa + gre_quant, data = math_camp, 
+                        family = binomial(link = "logit"))
+tidy(needs_camp_model)
+tidy(needs_camp_model, exponentiate = TRUE)
+
+math_camp_propensities <- augment(needs_camp_model, math_camp, type.predict = "response") %>%
+  rename(p_camp = .fitted)
+```
+
+Now we can calculate the inverse probability weights following this formula:
+
+$$
+\frac{\text{Treatment}}{\text{Propensity}} + \frac{1 - \text{Treatment}}{1 - \text{Propensity}}
+$$
+
+```{r}
+math_camp_ipw <- math_camp_propensities %>% 
+  mutate(ipw = (math_camp / p_camp) + ((1 - math_camp) / (1 - p_camp)))
+```
+
+Now we can use those weights in a regression model. Note how we only use one explanatory variable now. Technically undergrad GPA and quantitative GRE are backdoors, but we adjusted for them when calculating the IPWs.
+
+```{r}
+model_ipw <- lm(final_grade ~ math_camp, 
+                data = math_camp_ipw, weights = ipw)
+tidy(model_ipw)
+```
+
+
+## Adjustment using matching (with Mahalanobis distance)
+
+Finally, we can use nearest neighbor Mahalanobis distance matching to find pairs of treatment and control observations that are similar. Again, we control for backdoors at this stage and won't have to worry about them when finding the actual effect of the program. Note how `repace = TRUE` is enabled; that allows multiple control observations to be matched with single treatment observations, and can lead to better matching.
+
+```{r}
+matched <- matchit(math_camp ~ undergrad_gpa + gre_quant, data = math_camp,
+                   method = "nearest", distance = "mahalanobis", replace = TRUE)
+matched
+```
+
+There are 816 unmatched control observations, so those will get thrown away. Here are all the matches:
+
+```{r}
+head(matched$match.matrix)
+```
+
+We can convert the matched data into a dataset with `match.data()`. Notice how it has a smaller number of rows now:
+
+```{r}
+math_camp_matched <- match.data(matched)
+head(math_camp_matched)
+nrow(math_camp_matched)
+```
+
+Now we can use the matched data to find the effect of math camp. This estimate is better than it is in the unmatched data, but it's still not great:
+
+```{r}
+model_matched <- lm(final_grade ~ math_camp, data = math_camp_matched)
+tidy(model_matched)
+```
+
+One nice thing about using `matchit()` is that it also generates a kind of weight based on the distance between points. We can incorporate those weights into the model and get a more accurate estimate:
+
+```{r}
+model_matched_weighted <- lm(final_grade ~ math_camp, data = math_camp_matched, weights = weights)
+tidy(model_matched_weighted)
+```
+
+
+
+
+
+

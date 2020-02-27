@@ -1,0 +1,123 @@
+---
+title: "Analyzing RCTs"
+output: html_document
+---
+
+```{r load-libraries-data, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(broom)
+library(ggdag)
+
+village_self_selected <- read_csv("data/village_self_selected.csv")
+village_randomized <- read_csv("data/village_randomized.csv")
+```
+
+
+## Diagrams
+
+Here we're assuming that pre-program income, age, and sex (1 = male) all confound the relationship between program and post-program income (older, richer, males are more likely to enroll in the program)
+
+```{r}
+income_dag <- dagify(post_income ~ program + age + sex + pre_income,
+                     program ~ age + sex + pre_income,
+                     exposure = "program",
+                     outcome = "post_income",
+                     labels = c(post_income = "Post income",
+                                program = "Program",
+                                age = "Age",
+                                sex = "Sex",
+                                pre_income = "Pre income"),
+                     coords = list(x = c(program = 1, post_income = 5, age = 2, sex = 4, pre_income = 3),
+                                   y = c(program = 2, post_income = 2, age = 1, sex = 1, pre_income = 3)))
+
+ggdag_status(income_dag, use_labels = "label", text = FALSE) + 
+  theme_dag()
+```
+
+If we can randomize assignment to the program, we can delete all the arrows going into "Program":
+
+```{r}
+# Randomized
+income_dag_rct <- dagify(post_income ~ program + age + sex + pre_income,
+                         exposure = "program",
+                         outcome = "post_income",
+                         labels = c(post_income = "Post income",
+                                    program = "Program",
+                                    age = "Age",
+                                    sex = "Sex",
+                                    pre_income = "Pre income"),
+                         coords = list(x = c(program = 1, post_income = 5, age = 2, sex = 4, pre_income = 3),
+                                       y = c(program = 2, post_income = 2, age = 1, sex = 1, pre_income = 3)))
+
+ggdag_status(income_dag_rct, use_labels = "label", text = FALSE) +
+  theme_dag()
+```
+
+
+## Finding program effects
+
+When analyzing RCTs, you generally follow these steps:
+
+1. Check that the assignment was balanced (and really random)
+2. Calculate the difference in average outcomes across the treatment and control groups
+
+### Actual RCT
+
+How balanced are the covariates?
+
+```{r}
+village_randomized %>% 
+  group_by(program) %>% 
+  summarize(prop_male = mean(sex),
+            avg_age = mean(age),
+            avg_income = mean(pre_income))
+```
+
+What was the difference in outcomes?
+
+```{r}
+village_randomized %>% 
+  group_by(program) %>% 
+  summarize(avg_post_income = mean(post_income))
+```
+
+That's 1279.225 - 1179.977, or `r 1279.225 - 1179.977`. 
+
+You can also use regression to find the same thing:
+
+```{r}
+model_rct <- lm(post_income ~ program, data = village_randomized)
+tidy(model_rct)
+```
+
+### Observational data
+
+What if we do this with the observational data instead? How balanced is that group?
+
+```{r}
+village_self_selected %>% 
+  group_by(program) %>% 
+  summarize(prop_male = mean(sex),
+            avg_age = mean(age),
+            avg_income = mean(pre_income))
+```
+
+What was the difference in outcomes?
+
+```{r}
+village_self_selected %>% 
+  group_by(program) %>% 
+  summarize(avg_post_income = mean(post_income))
+```
+
+```{r}
+model_observational <- lm(post_income ~ program, data = village_self_selected)
+tidy(model_observational)
+```
+
+What if we close all the backdoors?
+
+```{r}
+model_adjusted <- lm(post_income ~ program + age + sex + pre_income, data = village_self_selected)
+tidy(model_adjusted)
+```
