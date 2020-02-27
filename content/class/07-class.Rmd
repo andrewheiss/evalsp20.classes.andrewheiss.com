@@ -33,3 +33,441 @@ Download all the R stuff we did today if you want to try it on your own computer
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r class-stuff, eval=FALSE, include=FALSE}
+library(tidyverse)
+library(broom)
+
+pp_full <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_title <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 6.5, units = "in", device = cairo_pdf)
+}
+
+set.seed(1234)
+good_stuff <- tibble(education = rnorm(50, 20, 3)) %>% 
+  mutate(outcome = 15 + education * rnorm(n(), -0.2, 0.05)) %>% 
+  mutate(treatment = as.logical(rbinom(n(), 1, 0.5)),
+         type = "Good")
+
+bad_stuff <- tibble(education = rnorm(20, 12, 2),
+                    outcome = rnorm(20, 5, 2),
+                    treatment = FALSE, 
+                    type = "Bad")
+more_bad_stuff <- tibble(education = rnorm(5, 28, 1),
+                         outcome = rnorm(5, 5, 0.5),
+                         treatment = FALSE,
+                         type = "Bad")
+
+all_data <- bind_rows(good_stuff, bad_stuff, more_bad_stuff) %>% 
+  mutate(treatment = factor(treatment, labels = c("Control", "Treated")))
+
+good_stuff_real <- filter(all_data, type == "Good")
+
+ggplot(all_data, aes(x = education, y = outcome, fill = treatment)) +
+  geom_point(size = 5, pch = 21, color = "white") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  labs(x = "Education", y = "Outcome") +
+  theme_bw(base_size = 19, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_title("dependency1")
+
+model_wrong <- lm(outcome ~ education + treatment, data = all_data) %>% 
+  tidy()
+
+model_wrong1 <- lm(outcome ~ education + treatment + I(education^2), data = all_data)
+
+model_wrong1_fitted <- expand_grid(education = seq(8, 30, 0.1),
+                                   treatment = c("Treated", "Control")) %>% 
+  augment(model_wrong1, newdata = .)
+
+ggplot(all_data, aes(x = education, y = outcome, fill = treatment, color = treatment)) +
+  geom_point(size = 5, pch = 21, color = "white") +
+  geom_abline(slope = filter(model_wrong, term == "education")$estimate, 
+              intercept = filter(model_wrong, term == "(Intercept)")$estimate,
+              color = "#0074D9", size = 0.75) +
+  geom_abline(slope = filter(model_wrong, term == "education")$estimate, 
+              intercept = filter(model_wrong, term == "(Intercept)")$estimate +
+                filter(model_wrong, term == "treatmentTreated")$estimate,
+              color = "#FF4136", size = 0.75) +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  labs(x = "Education", y = "Outcome") +
+  theme_bw(base_size = 19, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_title("dependency2")
+
+
+ggplot(all_data, aes(x = education, y = outcome, fill = treatment, color = treatment)) +
+  geom_point(size = 5, pch = 21, color = "white") +
+  geom_abline(slope = filter(model_wrong, term == "education")$estimate, 
+              intercept = filter(model_wrong, term == "(Intercept)")$estimate,
+              color = "#0074D9", size = 0.75) +
+  geom_abline(slope = filter(model_wrong, term == "education")$estimate, 
+              intercept = filter(model_wrong, term == "(Intercept)")$estimate +
+                filter(model_wrong, term == "treatmentTreated")$estimate,
+              color = "#FF4136", size = 0.75) +
+  geom_line(data = model_wrong1_fitted, 
+            aes(x = education, y = .fitted, color = treatment),
+            size = 0.75) +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_color_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  labs(x = "Education", y = "Outcome") +
+  theme_bw(base_size = 19, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_title("dependency3")
+
+ggplot(all_data, aes(x = education, y = outcome, fill = treatment)) +
+  geom_point(aes(alpha = type), size = 5, pch = 21, color = "white") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_alpha_manual(values = c(0.4, 1), name = NULL) +
+  guides(alpha = FALSE, color = FALSE) +
+  labs(x = "Education", y = "Outcome") +
+  theme_bw(base_size = 19, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_title("dependency3_5")
+
+model_better <- lm(outcome ~ education + treatment, data = good_stuff_real) %>% 
+  tidy()
+
+model_better1 <- lm(outcome ~ education + treatment + I(education^2), data = good_stuff_real)
+
+model_better1_fitted <- expand_grid(education = seq(8, 30, 0.1),
+                                    treatment = c("Treated", "Control")) %>% 
+  augment(model_better1, newdata = .)
+
+ggplot(all_data, aes(x = education, y = outcome, fill = treatment)) +
+  geom_point(aes(alpha = type), size = 5, pch = 21, color = "white") +
+  geom_abline(slope = filter(model_better, term == "education")$estimate, 
+              intercept = filter(model_better, term == "(Intercept)")$estimate,
+              color = "#0074D9", size = 0.75) +
+  geom_abline(slope = filter(model_better, term == "education")$estimate, 
+              intercept = filter(model_better, term == "(Intercept)")$estimate +
+                filter(model_better, term == "treatmentTreated")$estimate,
+              color = "#FF4136", size = 0.75) +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_alpha_manual(values = c(0.4, 1), name = NULL) +
+  guides(alpha = FALSE, color = FALSE) +
+  labs(x = "Education", y = "Outcome") +
+  theme_bw(base_size = 19, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_title("dependency4")
+
+
+ggplot(all_data, aes(x = education, y = outcome, fill = treatment)) +
+  geom_point(aes(alpha = type), size = 5, pch = 21, color = "white") +
+  geom_abline(slope = filter(model_better, term == "education")$estimate, 
+              intercept = filter(model_better, term == "(Intercept)")$estimate,
+              color = "#0074D9", size = 0.75) +
+  geom_abline(slope = filter(model_better, term == "education")$estimate, 
+              intercept = filter(model_better, term == "(Intercept)")$estimate +
+                filter(model_better, term == "treatmentTreated")$estimate,
+              color = "#FF4136", size = 0.75) +
+  geom_line(data = model_better1_fitted, 
+            aes(x = education, y = .fitted, color = treatment),
+            size = 0.75) +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_color_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_alpha_manual(values = c(0.4, 1), name = NULL) +
+  guides(alpha = FALSE, color = FALSE) +
+  labs(x = "Education", y = "Outcome") +
+  theme_bw(base_size = 19, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_title("dependency5")
+
+set.seed(1234)
+edu_age_treatment <- tibble(education = rnorm(30, 20, 3),
+                            age = rnorm(30, 50, 8),
+                            treatment = "Treated")
+
+edu_age_control <- tibble(education = runif(70, 
+                                            min(edu_age_treatment$education) - 2, 
+                                            max(edu_age_treatment$education) + 2),
+                          age = runif(70,
+                                      min(edu_age_treatment$age) - 5, 
+                                      max(edu_age_treatment$age) + 5),
+                          treatment = "Control")
+
+edu_age <- bind_rows(edu_age_treatment, edu_age_control) %>% 
+  mutate(treat_bin = recode(treatment, Treated = 1, Control = 0)) %>% 
+  mutate(id = 1:n()) %>% 
+  mutate(treatment = factor(treatment))
+
+ggplot(edu_age, aes(x = education, y = age, color = treatment)) +
+  geom_point()
+
+library(MatchIt)
+
+matched <- matchit(treat_bin ~ education + age, data = edu_age,
+                   method = "nearest", distance = "mahalanobis")
+
+matched
+
+matched_pairs <- tibble(trt = rownames(matched$match.matrix),
+                        ctrl = matched$match.matrix) %>% 
+  mutate_all(as.numeric)
+
+edu_age_filtered <- edu_age %>% 
+  filter(id %in% c(matched_pairs$trt, matched_pairs$ctrl)) %>% 
+  left_join(matched_pairs, by = c("id" = "trt")) %>% 
+  left_join(select(edu_age, id, education_ctrl = education, age_ctrl = age),
+            by = c("ctrl" = "id"))
+
+edu_age_matched <- edu_age %>% 
+  left_join(matched_pairs, by = c("id" = "trt")) %>% 
+  left_join(select(edu_age, id, education_ctrl = education, age_ctrl = age),
+            by = c("ctrl" = "id")) %>% 
+  filter(treatment == "Treated")
+
+
+ggplot(edu_age, aes(x = education, y = age, fill = treatment)) +
+  geom_point(size = 5, pch = 21, color = "white") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  guides(color = FALSE) +
+  labs(x = "Education", y = "Age") +
+  theme_bw(base_size = 20, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("distance1")
+
+ggplot(edu_age, aes(x = education, y = age, fill = treatment)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.4) +
+  geom_point(data = edu_age_filtered, size = 5, pch = 21, color = "white") +
+  geom_segment(data = edu_age_matched, 
+               aes(x = education, xend = education_ctrl,
+                   y = age, yend = age_ctrl),
+               linetype = "11", color = "grey50", size = 1) +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_color_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  guides(color = FALSE) +
+  labs(x = "Education", y = "Age") +
+  theme_bw(base_size = 20, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("distance2")
+
+ggplot(edu_age, aes(x = education, y = age, fill = treatment)) +
+  geom_point(data = edu_age_filtered, size = 5, pch = 21, color = "white") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_color_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  guides(color = FALSE) +
+  labs(x = "Education", y = "Age") +
+  coord_cartesian(xlim = c(min(edu_age$education), max(edu_age$education)),
+                  ylim = c(min(edu_age$age), max(edu_age$age))) +
+  theme_bw(base_size = 20, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("distance3")
+
+
+logit_edu_age <- glm(treatment ~ education + age, data = edu_age,
+                     family = binomial(link = "logit"))
+
+tidy(logit_edu_age, exponentiate = TRUE)
+
+edu_age_propensities <- augment(logit_edu_age, edu_age, type.predict = "response") %>%
+  mutate(p_treatment = .fitted)
+
+ggplot(edu_age, aes(x = education, y = treat_bin)) +
+  geom_point() + 
+  geom_smooth(data = edu_age_propensities, aes(x = education, y = .fitted),
+              method = "glm", method.args = list(family = "binomial"))
+  geom_line(data = edu_age_propensities, aes(y = p_treatment))
+
+edu_age_ipw <- edu_age_propensities %>% 
+  mutate(w_ate = (treat_bin / p_treatment) + ((1 - treat_bin) / (1 - p_treatment)))
+
+
+ggplot(edu_age_ipw, aes(x = education, y = age, fill = treatment, size = w_ate)) +
+  geom_point(pch = 21, color = "white") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), name = NULL) +
+  scale_size_continuous(range = c(1, 7)) +
+  guides(color = FALSE, size = FALSE) +
+  labs(x = "Education", y = "Age") +
+  theme_bw(base_size = 20, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("ipw")
+
+library(ggdag)
+library(dagitty)
+node_details <- tribble(
+  ~name, ~label, ~x, ~y,
+  "treatment", "Treatment", 1, 1,
+  "outcome", "Outcome", 4, 1,
+  "age", "Age", 2, 2,
+  "education", "Education", 3, 2
+)
+
+node_labels <- node_details$label
+names(node_labels) <- node_details$name
+
+my_dag <- dagify(outcome ~ treatment + age + education,
+                 treatment ~ age + education,
+                 exposure = "treatment",
+                 outcome = "outcome",
+                 coords = node_details,
+                 labels = node_labels) %>% 
+  tidy_dagitty() %>%
+  node_status()   # Add column for exposure/outcome/latent
+
+status_colors <- c(exposure = "#0074D9", outcome = "#FF4136", latent = "grey50")
+
+# Fancier graph
+ggplot(my_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 10,
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines")) +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) + 
+  theme_dag(base_size = 20)
+pp_full("edu_age_dag")
+
+
+
+model_transmission <- glm(am ~ mpg, data = mtcars, family = binomial(link = "logit"))
+tidy(model_transmission, exponentiate = TRUE)
+
+augment(model_transmission, data = mtcars, type.predict = "response") %>% 
+  select(mpg, am, propensity = .fitted) %>% 
+  mutate(ip_weight = (am / propensity) + ((1 - am) / (1 - propensity)))
+
+ggplot(mtcars, aes(x=mpg, y=am)) + geom_point(size = 5) + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=TRUE) +
+  theme_bw(base_size = 16, base_family = "Fira Sans Condensed")
+
+
+
+# Class stuff -------------------------------------------------------------
+
+# Program to boost incomes
+income_dag <- dagify(post_income ~ program + age + sex + pre_income,
+                     program ~ age + sex + pre_income,
+                     exposure = "program",
+                     outcome = "post_income",
+                     labels = c(post_income = "Post income",
+                                program = "Program",
+                                age = "Age",
+                                sex = "Sex",
+                                pre_income = "Pre income"),
+                     coords = list(x = c(program = 1, post_income = 5, age = 2, sex = 4, pre_income = 3),
+                                   y = c(program = 2, post_income = 2, age = 1, sex = 1, pre_income = 3)))
+
+ggdag_status(income_dag, use_labels = "label", text = FALSE) + 
+  theme_dag()
+
+# Randomized
+income_dag_rct <- dagify(post_income ~ program + age + sex + pre_income,
+                         exposure = "program",
+                         outcome = "post_income",
+                         labels = c(post_income = "Post income",
+                                    program = "Program",
+                                    age = "Age",
+                                    sex = "Sex",
+                                    pre_income = "Pre income"),
+                         coords = list(x = c(program = 1, post_income = 5, age = 2, sex = 4, pre_income = 3),
+                                       y = c(program = 2, post_income = 2, age = 1, sex = 1, pre_income = 3)))
+
+ggdag_status(income_dag_rct, use_labels = "label", text = FALSE) +
+  theme_dag()
+
+
+
+set.seed(1234)
+
+village <- tibble(id = 1:1000) %>% 
+  mutate(sex = rbinom(n(), 1, 0.6),
+         age = rnorm(n(), mean = 35, sd = 10),
+         pre_income = rnorm(n(), mean = 800, sd = 100)) 
+
+village_self_selected <- village %>% 
+  mutate(prob_program = (15 * sex) + (1.5 * age) + (0.5 * pre_income / 100),
+         prob_program = scales::rescale(prob_program, to = c(0.5, 0.95))) %>% 
+  mutate(program = rbinom(n(), 1, prob_program)) %>% 
+  mutate(post_income = 800 + (20 * sex) + (10 * age) + (0.5 * pre_income / 100) +
+           (100 * program) + rnorm(n(), 15, 5)) %>% 
+  select(-prob_program)
+
+village_randomized <- village %>% 
+  mutate(program = rbinom(n(), 1, 0.5)) %>% 
+  mutate(post_income = 800 + (20 * sex) + (10 * age) + (0.5 * pre_income / 100) +
+           (100 * program) + rnorm(n(), 15, 5))
+
+write_csv(village_self_selected, here::here("static", "data", "village_self_selected.csv"))
+write_csv(village_randomized, here::here("static", "data", "village_randomized.csv"))
+
+lm(post_income ~ program, data = village_self_selected)
+lm(post_income ~ program + sex + age + pre_income, data = village_self_selected)
+
+lm(post_income ~ program, data = village_randomized)
+
+
+
+
+# Make these random draws the same every time
+set.seed(1234)
+
+# Create 2,000 rows
+num <- 2000
+
+# Create confounder variables that are related to each other
+mu <- c(undergrad_gpa = 3, gre_verbal = 160, gre_quant = 145)
+stddev <- c(undergrad_gpa = 0.5, gre_verbal = 10, gre_quant = 5)
+
+# Correlation matrix: undergrad GPA and verbal GRE have a correlation of 0.8;
+# undergrad GPA and quantitative GRE have a correlation of 0.6, and verbal GRE
+# and quantitative GRE have a correlation of 0.4
+cor_matrix <- matrix(c(1.0, 0.8, 0.6,
+                       0.8, 1.0, 0.4,
+                       0.6, 0.4, 1.0),
+                     ncol = 3)
+
+# Convert correlation matrix to covariance matrix using fancy math
+cov_matrix <- stddev %*% t(stddev) * cor_matrix
+
+# Draw random numbers
+confounders <- MASS::mvrnorm(n = num, mu = mu, Sigma = cov_matrix, empirical = TRUE) %>%
+  as_tibble() %>%
+  # Truncate values so they're within 130-170 range for GRE and less than 4.0 for GPA
+  mutate_at(vars(gre_verbal, gre_quant),
+            ~case_when(
+              . > 170 ~ 170,
+              . < 130 ~ 130,
+              TRUE ~ .
+            )) %>%
+  mutate(undergrad_gpa = ifelse(undergrad_gpa > 4, 4, undergrad_gpa))
+
+# Make official dataset of simulated values
+math_camp <- tibble(id = 1:num) %>%
+  bind_cols(confounders) %>%  # Bring in confounders
+  # People need math camp if their GRE and GPA is lower than the average
+  mutate(needs_camp = gre_quant < mean(gre_quant) & 
+           undergrad_gpa < mean(undergrad_gpa)) %>%
+  # Build in some noncompliance: 80% of those who need math camp do it; 20% of
+  # those who don't need it do it.
+  mutate(math_camp = case_when(
+    needs_camp == TRUE ~ rbinom(n(), 1, 0.8),
+    needs_camp == FALSE ~ rbinom(n(), 1, 0.2)
+  )) %>%
+  # Create random error in grades
+  mutate(grade_noise = rnorm(num, 15, 5)) %>%
+  # Create final grade based on all the arrows going into the node in the DAG.
+  # There's a 10 point causal effect
+  mutate(final_grade = (0.3 * gre_verbal) + (0.5 * gre_quant) + 
+           (0.4 * undergrad_gpa) + (10 * math_camp) + grade_noise) %>%
+  mutate(math_camp = as.logical(math_camp))  # Make true/false
+
+write_csv(math_camp, here::here("static", "data", "math_camp.csv"))
+
+
+math_camp %>% 
+  count(math_camp) %>% 
+  mutate(prop = n / sum(n))
+```
