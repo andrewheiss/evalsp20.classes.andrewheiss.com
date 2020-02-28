@@ -72,7 +72,7 @@ lessons:
     reading: "08-reading"
 
   - title: "Problem set 3"
-    date: "March 4"
+    date: "March 11"
     assignment: "03-problem-set"
 
   - title: '<i class="fas fa-university"></i> **Difference-in-differences II**'
@@ -80,7 +80,7 @@ lessons:
     reading: "09-reading"
 
   - title: "Problem set 4"
-    date: "March 11"
+    date: "March 14"
     assignment: "04-problem-set"
     
   - title: '<i class="fas fa-university"></i> **Regression discontinuity I**'
@@ -88,7 +88,7 @@ lessons:
     reading: "10-reading"
 
   - title: "Problem set 5"
-    date: "March 25"
+    date: "April 1"
     assignment: "05-problem-set"
 
   - title: '<i class="fas fa-university"></i> **Instrumental variables I**'
@@ -96,7 +96,7 @@ lessons:
     reading: "11-reading"
 
   - title: "Problem set 6"
-    date: "April 1"
+    date: "April 8"
     assignment: "06-problem-set"
     
   - title: '<i class="fas fa-university"></i> **Instrumental variables II & Regression discontinuity II**'
@@ -104,11 +104,11 @@ lessons:
     reading: "12-reading"
 
   - title: "Problem set 7"
-    date: "April 8"
+    date: "April 11"
     assignment: "07-problem-set"
     
   - title: '<i class="fas fa-star"></i> **Exam 2**'
-    date: "April 9–April 15"
+    date: "April 12–April 18"
 
   - title: '<span class="fake-header-table">Applied evaluation</span>'
     header: True
