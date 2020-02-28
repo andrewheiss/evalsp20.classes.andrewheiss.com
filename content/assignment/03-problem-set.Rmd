@@ -13,4 +13,277 @@ editor_options:
   chunk_output_type: console
 ---
 
-The instructions for this problem set will go live 2 weeks before the deadline.
+**IMPORTANT**: Again, this looks like a lot of work, but it's mostly copying/pasting chunks of code and changing things. 
+
+You can find a [complete example of RCTs and matching and inverse probability weighting on the class page from Week 7](/class/07-class/). **This will be incredibly useful as a guide for completing this assignment.**
+
+Remember, if you're struggling, *please* talk to me. Work with classmates too. (Definitely work with classmates on this one!) Don't suffer in silence!
+
+
+# Instructions
+
+1. Open the project named "Problem Set 3" on RStudio.cloud. [This link should take you to the project](https://rstudio.cloud/spaces/44864/project/993000)—if it doesn't, log in and look for the project named "Problem Set 3."
+
+    Alternatively, if you're using R on your own computer, download this file, *unzip it*, and double click on the file named `problem-set-3.Rproj`: [<i class="fas fa-file-archive"></i> `problem-set-3.zip`](/projects/problem-set-3.zip)
+    
+    You'll need to make sure you have these packages installed on your computer: `tidyverse`, `MatchIt`, and `patchwork`. If you try to load one of those packages with `library(tidyverse)` or `library(MatchIt)`, etc., and R gives an error that the package is missing, use the "Packages" panel in RStudio to install it.
+
+2. Rename the R Markdown file named `your-name_problem-set-3.Rmd` to something that matches your name and open it in RStudio.
+
+3. Complete the tasks given in the R Markdown file. Fill out code in the empty chunks provided (you can definitely copy, paste, and adapt from other code in the document or [the class page on RCTs and matching](/class/07-class/)—don't try to write everything from scratch!). You'll need to insert your own code chunks. Rather than typing them by hand (that's tedious!), use the "Insert" button at the top of the editing window, or press "ctrl + alt + I" on Windows, or "⌥ + ⌘ + I" on macOS.
+
+```{r insert-chunk-button, echo=FALSE, out.width="19%", indent="    "}
+knitr::include_graphics("/img/assignments/insert-chunk-button.png")
+```
+
+4. When you're all done, click on the "Knit" button at the top of the editing window and create a PDF or Word document of your problem set. Upload that file to iCollege.
+
+```{r knit-button, echo=FALSE, out.width="30%", indent="    "}
+knitr::include_graphics("/img/assignments/knit-button.png")
+```
+
+
+```{r make-data, eval=FALSE, include=FALSE}
+library(tidyverse)  # ggplot, dplyr, %>%, and friends
+library(ggdag)  # Make DAGs with ggplot
+library(dagitty)  # Do basic DAG math
+library(broom)  # For converting model output to data frames
+
+num <- 1241
+num_rct <- 493
+
+node_details <- tribble(
+  ~name, ~label, ~x, ~y,
+  "barrel", "Rain barrel", 1, 3,
+  "water_bill", "Water bill", 3, 3,
+  "yard_size", "Yard size", 2, 5,
+  "garden", "Home garden", 2, 4,
+  "attitude_env", "Environmental attitudes", 2, 2,
+  "temperature", "Average temperature", 2, 1
+)
+
+node_labels <- node_details$label
+names(node_labels) <- node_details$name
+
+rain_dag <- dagify(water_bill ~ barrel + yard_size + attitude_env + temperature + garden,
+                   barrel ~ yard_size + attitude_env + temperature + garden,
+                   garden ~ yard_size + attitude_env,
+                   exposure = "barrel",
+                   outcome = "water_bill",
+                   coords = node_details,
+                   labels = node_labels)
+
+# Turn DAG into a tidy data frame for plotting
+rain_dag_tidy <- rain_dag %>%
+  tidy_dagitty() %>%
+  node_status()   # Add column for exposure/outcome/latent
+
+status_colors <- c(exposure = "#0074D9", outcome = "#FF4136", latent = "grey50")
+
+# Fancier graph
+ggplot(rain_dag_tidy, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(1, "lines"),
+                 end_cap = ggraph::circle(1, "lines"),
+                 edge_width = 0.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.25, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 7) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 3) +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) +
+  theme_dag()
+
+ggsave(here::here("static", "projects", "problem-set-3", "barrel-dag-observational.png"),
+       width = 5, height = 2.5, units = "in", type = "cairo", dpi = 300)
+
+
+rain_dag_rct <- dagify(water_bill ~ barrel + yard_size + attitude_env + temperature + garden,
+                       garden ~ yard_size + attitude_env,
+                       exposure = "barrel",
+                       outcome = "water_bill",
+                       coords = node_details,
+                       labels = node_labels)
+
+# Turn DAG into a tidy data frame for plotting
+rain_dag_tidy_rct <- rain_dag_rct %>%
+  tidy_dagitty() %>%
+  node_status()   # Add column for exposure/outcome/latent
+
+status_colors <- c(exposure = "#0074D9", outcome = "#FF4136", latent = "grey50")
+
+# Fancier graph
+ggplot(rain_dag_tidy_rct, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(1, "lines"),
+                 end_cap = ggraph::circle(1, "lines"),
+                 edge_width = 0.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.25, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 7) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 3) +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) +
+  theme_dag()
+
+ggsave(here::here("static", "projects", "problem-set-3", "barrel-dag-rct.png"),
+       width = 5, height = 2.5, units = "in", type = "cairo", dpi = 300)
+
+
+paths(rain_dag)
+adjustmentSets(rain_dag)
+
+
+# Create confounder variables that are related to each other
+# Average yard size: https://www.homeadvisor.com/r/average-yard-size-by-state/
+mu <- c(yard_size = 20000, home_garden = 35, attitude_env = 70)
+stddev <- c(yard_size = 10000, home_garden = 20, attitude_env = 40)
+lower <- c(yard_size = 500, home_garden = 0, attitude_env = 0)
+upper <- c(yard_size = 40000, home_garden = 100, attitude_env = 150)
+
+# https://stackoverflow.com/a/46563034/120898
+correlations_confounders <- tribble(
+  ~var1, ~var2, ~correlation,
+  "yard_size", "home_garden", 0.7,
+  "yard_size", "attitude_env", 0.1,
+  "home_garden", "attitude_env", 0.9,
+) %>%
+  mutate_at(vars(starts_with("var")),
+            ~factor(., levels = c("yard_size", "home_garden", "attitude_env"))) %>%
+  xtabs(correlation ~ var1 + var2, ., drop.unused.levels = FALSE) %>%
+  '+'(., t(.)) %>%
+  `diag<-`(1) %>%
+  as.data.frame.matrix() %>% as.matrix()
+
+# Convert correlation matrix to covariance matrix using fancy math
+cov_matrix_confounders <- stddev %*% t(stddev) * correlations_confounders
+
+# Force the covariance matrix to be positive definite and symmetric
+# https://stats.stackexchange.com/q/153166/3025
+sigma <- as.matrix(Matrix::nearPD(cov_matrix_confounders)$mat)
+
+
+# Make RCT data -----------------------------------------------------------
+
+set.seed(12345)
+confounders_rct <- tmvtnorm::rtmvnorm(num_rct, mean = mu, sigma = sigma,
+                                      lower = lower, upper = upper) %>%
+  magrittr::set_colnames(names(mu)) %>% as_tibble() %>%
+  mutate(home_garden = home_garden / 100) %>%
+  mutate(home_garden_binary = home_garden > 0.5) %>%
+  mutate(attitude_env = scales::rescale(attitude_env, to = c(1, 10)),
+         attitude_env = round(attitude_env, 0),
+         yard_size = round(abs(yard_size), 0)) %>%
+  mutate(temperature = round(rnorm(n(), mean = 70, sd = 5), 1))
+
+set.seed(12345)
+rain_rct <- tibble(id = 1:493) %>%
+  bind_cols(confounders_rct) %>%
+  mutate(barrel_num = rbinom(n(), 1, 0.5),
+         barrel = factor(barrel_num, labels = c("No barrel", "Barrel"))) %>%
+  mutate(bill_noise = rnorm(n(), 0, 15)) %>%
+  mutate(water_bill = 30 + (-40 * barrel_num) + (-5 * attitude_env) + (2.5 * temperature) +
+           (20 * home_garden) + (2.1 * yard_size / 1000) + bill_noise) %>%
+  mutate(home_garden = factor(home_garden_binary, labels = c("No home garden", "Home garden")),
+         home_garden_num = as.numeric(home_garden_binary)) %>%
+  select(id, water_bill, barrel, barrel_num, yard_size,
+         home_garden, home_garden_num, attitude_env, temperature)
+
+write_csv(rain_rct, here::here("static", "projects", "problem-set-3", "data", "barrels_rct.csv"))
+lm(water_bill ~ barrel, data = rain_rct)
+
+
+# Make observational data -------------------------------------------------
+
+set.seed(12345)
+confounders <- tmvtnorm::rtmvnorm(num, mean = mu, sigma = sigma,
+                                  lower = lower, upper = upper) %>%
+  magrittr::set_colnames(names(mu)) %>% as_tibble() %>%
+  mutate(home_garden = home_garden / 100) %>%
+  mutate(home_garden_binary = home_garden > 0.5) %>%
+  mutate(attitude_env = scales::rescale(attitude_env, to = c(1, 10)),
+         attitude_env = round(attitude_env, 0),
+         yard_size = round(abs(yard_size), 0)) %>%
+  mutate(temperature = round(rnorm(n(), mean = 70, sd = 5), 1))
+
+set.seed(1234)
+rain <- tibble(id = 1:num) %>%
+  bind_cols(confounders) %>%
+  # Simulate data from a logit model
+  # https://stats.stackexchange.com/a/46525/3025
+  # But then do all sorts of weird distortion to make it less likely to have a barrel
+  mutate(barrel_effect = (0.4 * attitude_env) + (4 * home_garden) +
+           (0.05 * yard_size / 1000) + (0.7 * temperature),
+         barrel_diff = barrel_effect - mean(barrel_effect),
+         barrel_effect = ifelse(barrel_diff < 0, barrel_effect - (barrel_diff / 2), barrel_effect),
+         barrel_effect_rescaled = scales::rescale(barrel_effect, to = c(-2.2, 2.2)),
+         inv_logit = 1 / (1 + exp(-barrel_effect_rescaled)),
+         barrel_num = rbinom(n(), 1, inv_logit)) %>%
+  mutate(barrel = factor(barrel_num, labels = c("No barrel", "Barrel"))) %>%
+  mutate(bill_noise = rnorm(num, 0, 15)) %>%
+  mutate(water_bill = 30 + (-40 * barrel_num) + (-5 * attitude_env) + (2.5 * temperature) +
+           (20 * home_garden) + (2.1 * yard_size / 1000) + bill_noise) %>%
+  mutate(home_garden = factor(home_garden_binary, labels = c("No home garden", "Home garden")),
+         home_garden_num = as.numeric(home_garden_binary)) %>%
+  select(id, water_bill, barrel, barrel_num, yard_size,
+         home_garden, home_garden_num, attitude_env, temperature)
+
+write_csv(rain, here::here("static", "projects", "problem-set-3", "data", "barrels_observational.csv"))
+
+
+
+
+ggplot(rain, aes(x = yard_size)) +
+  geom_histogram(binwidth = 1000, color = "white") +
+  facet_wrap(vars(home_garden), ncol = 1)
+
+ggplot(rain, aes(x = attitude_env)) +
+  geom_histogram(binwidth = 1, color = "white") +
+  facet_wrap(vars(home_garden), ncol = 1)
+
+rain %>% group_by(home_garden) %>% summarize(avg = mean(attitude_env))
+
+rain %>%
+  count(barrel)
+
+rain %>%
+  group_by(barrel) %>%
+  summarize(avg = mean(water_bill))
+
+model_wrong <- lm(water_bill ~ barrel, data = rain)
+tidy(model_wrong)
+
+model_ols <- lm(water_bill ~ barrel + yard_size + home_garden + attitude_env + temperature,
+                data = rain)
+tidy(model_ols)
+
+needs_barrel_model <- glm(barrel ~ yard_size + home_garden + attitude_env + temperature,
+                          data = rain, family = binomial(link = "logit"))
+
+barrel_propensities <- augment(needs_barrel_model, rain, type.predict = "response") %>%
+  mutate(p_barrel = .fitted) %>%   # Rename column
+  mutate(w_ate = (barrel_num / p_barrel) + ((1 - barrel_num) / (1 - p_barrel)),
+         w_ato = (1 - p_barrel) * barrel_num + p_barrel * (1 - barrel_num))
+
+model_ipw_ate <- lm(water_bill ~ barrel,
+                    data = barrel_propensities, weights = w_ate)
+tidy(model_ipw_ate)
+
+model_ipw_ato <- lm(water_bill ~ barrel,
+                    data = barrel_propensities, weights = w_ato)
+tidy(model_ipw_ato)
+
+
+library(MatchIt)  # For matching stuff
+
+matched <- matchit(barrel_num ~ yard_size + attitude_env + temperature + home_garden_num,
+                   data = rain, method = "nearest", distance = "mahalanobis", replace = TRUE)
+matched
+
+rain_matched <- match.data(matched)
+
+model_matched <- lm(water_bill ~ barrel, data = rain_matched, weights = weights)
+tidy(model_matched)
+
+```
+
