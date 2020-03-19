@@ -14,8 +14,8 @@ menu:
     weight: 8
 type: docs
 weight: 8
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
+pdf: /slides/PMAP-8521_2020-03-04.pdf
+thumb: /slides/PMAP-8521_2020-03-04.png
 editor_options: 
   chunk_output_type: console
 ---
@@ -25,6 +25,314 @@ editor_options:
 `r blogdown::shortcode("slides")`
 
 
+## R stuff
+
+Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week-8.zip`](/projects/week-8.zip)
+
+
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r class-stuff, eval=FALSE, include=FALSE}
+pp_full <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_title <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 6.5, units = "in", device = cairo_pdf)
+}
+
+pp_square <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 7.5, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_square_legend <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 11, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+library(tidyverse)
+library(broom)
+
+hotdogs <- tribble(
+  ~price, ~cheese, ~chili,
+  2.00,   FALSE,   FALSE,
+  2.35,   TRUE,    FALSE,
+  2.35,   FALSE,   TRUE,
+  2.70,   TRUE,    TRUE
+)
+
+model <- lm(price ~ cheese + chili + cheese * chili, data = hotdogs)
+
+tidy(model) %>% 
+  select(term, estimate) %>% 
+  mutate(estimate = round(estimate, 2))
+
+
+world_happiness <- read_csv(here::here("static", "data", "world_happiness.csv")) %>% 
+  mutate(latin_america = region == "Latin America & Caribbean") %>% 
+  mutate(latin_america = factor(latin_america, labels = c("Not Latin America", "Latin America")))
+
+model_life_school_region <- lm(happiness_score ~ life_expectancy + 
+                                 school_enrollment + region, 
+                               data = world_happiness)
+tidy(model_life_school_region)
+
+model_life_la <- lm(happiness_score ~ life_expectancy + latin_america, 
+                    data = world_happiness)
+tidy(model_life_la)
+
+ggplot(world_happiness, aes(x = life_expectancy, y = happiness_score)) +
+  geom_point(aes(fill = latin_america), size = 5, pch = 21, color = "white", alpha = 0.7) +
+  scale_fill_manual(values = c("grey70", "#B10DC9"), name = NULL) +
+  labs(x = "Life expectancy", y = "Happiness score") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_square_legend("happiness1")
+
+ggplot(world_happiness, aes(x = life_expectancy, y = happiness_score)) +
+  geom_point(aes(fill = latin_america), size = 5, pch = 21, color = "white", alpha = 0.7) +
+  geom_abline(slope = 0.1023494, intercept = -2.0770858, 
+              color = "#0074D9", size = 2) +
+  scale_fill_manual(values = c("grey70", "#B10DC9"), name = NULL) +
+  labs(x = "Life expectancy", y = "Happiness score") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_square_legend("happiness2")
+
+ggplot(world_happiness, aes(x = life_expectancy, y = happiness_score)) +
+  geom_point(aes(fill = latin_america), size = 5, pch = 21, color = "white", alpha = 0.7) +
+  geom_abline(slope = 0.1023494, intercept = -2.0770858, 
+              color = "#0074D9", size = 2) +
+  geom_abline(slope = 0.1023494, intercept = -2.0770858 + 0.6234255, 
+              color = colorspace::darken("#B10DC9", 0.3), size = 2) +
+  scale_fill_manual(values = c("grey70", "#B10DC9"), name = NULL) +
+  labs(x = "Life expectancy", y = "Happiness score") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_square_legend("happiness3")
+
+ggplot(world_happiness, aes(x = life_expectancy, y = happiness_score)) +
+  geom_point(aes(fill = latin_america), size = 5, pch = 21, color = "white", alpha = 0.7) +
+  geom_abline(slope = 0.1023494, intercept = -2.0770858, 
+              color = "#0074D9", size = 2) +
+  geom_abline(slope = 0.10154408 + 0.02884127, intercept = -2.01948544 + -1.51554651, 
+              color = colorspace::darken("#B10DC9", 0.3), size = 2) +
+  scale_fill_manual(values = c("grey70", "#B10DC9"), name = NULL) +
+  labs(x = "Life expectancy", y = "Happiness score") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_square_legend("happiness4")
+
+library(ggdag)
+
+node_details <- tribble(
+  ~name, ~label, ~x, ~y,
+  "treatment", "Minimum wage", 1, 2,
+  "outcome", "Jobs", 3, 2,
+  "time", "Time", 2, 3,
+  "nj", "Being in New Jersey", 2, 1
+)
+
+node_labels <- node_details$label
+names(node_labels) <- node_details$name
+
+my_dag <- dagify(outcome ~ treatment + time + nj,
+                 treatment ~ time + nj,
+                 exposure = "treatment",
+                 outcome = "outcome",
+                 coords = node_details,
+                 labels = node_labels) %>% 
+  tidy_dagitty() %>%
+  node_status()   # Add column for exposure/outcome/latent
+
+status_colors <- c(exposure = "#0074D9", outcome = "#FF4136", latent = "grey50")
+
+# Fancier graph
+set.seed(1234)
+ggplot(my_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 10,
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) + 
+  theme_dag(base_size = 20)
+pp_full("min_wage_dag")
+
+
+trends <- expand_grid(state = c("A", "B"), month = 1:6) %>% 
+  mutate(income_parallel = case_when(
+    state == "A" ~ 100 + 125 * month,
+    state == "B" & month <= 3 ~ 100 + 125 * month + 200,
+    state == "B" & month > 3 ~ 100 + 125 * month + 400
+  )) %>% 
+  mutate(income_flat = case_when(
+    state == "A" ~ 100 + 125 * month,
+    state == "B" & month <= 3 ~ 675,
+    state == "B" & month > 3 ~ 100 + 125 * month + 400
+  )) %>% 
+  mutate(income_down = case_when(
+    state == "A" ~ 100 + 125 * month,
+    state == "B" & month <= 3 ~ 800 - 100 * month + 200,
+    state == "B" & month > 3 ~ 100 + 125 * month + 400
+  )) %>% 
+  mutate(state = paste0("State ", state))
+
+ggplot(trends, aes(x = as.factor(month), y = income_parallel, color = state, group = state)) +
+  geom_smooth(data = filter(trends, state == "State B", month <= 3), 
+              method = "lm", fullrange = TRUE, 
+              color = "#0074D9", size = 1, linetype = "22") +
+  geom_vline(xintercept = 3.5, size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#3D9970", "#FF851B"), name = NULL) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_full("parallel1")
+
+ggplot(trends, aes(x = as.factor(month), y = income_flat, color = state, group = state)) +
+  geom_smooth(data = filter(trends, state == "State B", month <= 3), 
+              method = "lm", fullrange = TRUE, 
+              color = "#0074D9", size = 1, linetype = "22") +
+  geom_vline(xintercept = 3.5, size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#3D9970", "#FF851B"), name = NULL) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_full("parallel2")
+
+ggplot(trends, aes(x = as.factor(month), y = income_down, color = state, group = state)) +
+  geom_smooth(data = filter(trends, state == "State B", month <= 3), 
+              method = "lm", fullrange = TRUE, 
+              color = "#0074D9", size = 1, linetype = "22") +
+  geom_vline(xintercept = 3.5, size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#3D9970", "#FF851B"), name = NULL) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_full("parallel3")
+
+ggplot(trends, aes(x = as.factor(month), y = income_parallel, color = state, group = state)) +
+  geom_ribbon(data = filter(trends, state == "State B", month <= 3),
+              aes(x = as.factor(month), ymin = -Inf, ymax = Inf, color = NULL), 
+              fill = "#7FDBFF", alpha = 0.2) +
+  geom_smooth(data = filter(trends, state == "State B", month <= 3), 
+              method = "lm", fullrange = TRUE, 
+              color = "#0074D9", size = 1, linetype = "22") +
+  geom_vline(xintercept = 1.5, size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#3D9970", "#FF851B"), name = NULL) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_full("parallel4")
+
+ggplot(trends, aes(x = as.factor(month), y = income_flat, color = state, group = state)) +
+  geom_ribbon(data = filter(trends, state == "State B", month <= 3),
+              aes(x = as.factor(month), ymin = -Inf, ymax = Inf, color = NULL), 
+              fill = "#7FDBFF", alpha = 0.2) +
+  geom_smooth(data = filter(trends, state == "State B", month <= 3), 
+              method = "lm", fullrange = TRUE, 
+              color = "#0074D9", size = 1, linetype = "22") +
+  geom_vline(xintercept = 1.5, size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#3D9970", "#FF851B"), name = NULL) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_full("parallel5")
+
+ggplot(trends, aes(x = as.factor(month), y = income_down, color = state, group = state)) +
+  geom_ribbon(data = filter(trends, state == "State B", month <= 3),
+              aes(x = as.factor(month), ymin = -Inf, ymax = Inf, color = NULL), 
+              fill = "#7FDBFF", alpha = 0.2) +
+  geom_smooth(data = filter(trends, state == "State B", month <= 3), 
+              method = "lm", fullrange = TRUE, 
+              color = "#0074D9", size = 1, linetype = "22") +
+  geom_vline(xintercept = 1.5, size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#3D9970", "#FF851B"), name = NULL) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed")
+pp_full("parallel6")
+
+
+gb_trends <- expand_grid(type = c("Early", "Late"), month = 1:12) %>% 
+  mutate(income = case_when(
+    type == "Late" & month <= 8 ~ 100 + 75 * month,
+    type == "Late" & month > 8 ~ 100 + 75 * month + 200,
+    type == "Early" & month <= 4 ~ 100 + 75 * month + 200,
+    type == "Early" & month > 4 ~ 100 + 75 * month + 400
+  )) %>% 
+  mutate(month_f = fct_inorder(factor(month)))
+
+ggplot(gb_trends, aes(x = month, y = income, color = type)) +
+  geom_smooth(data = filter(gb_trends, type == "Early", month <= 4),
+              aes(x = month, y = income), inherit.aes = FALSE,
+              method = "lm", fullrange = TRUE, se = FALSE,
+              color = "#F012BE", size = 1, linetype = "22") +
+   geom_smooth(data = filter(gb_trends, type == "Late", month <= 7),
+              aes(x = month, y = income), inherit.aes = FALSE,
+              method = "lm", fullrange = TRUE, se = FALSE,
+              color = "#001f3f", size = 1, linetype = "22") +
+  geom_vline(xintercept = c(4.5, 8.5), size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#F012BE", "#001f3f"), name = NULL) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed") +
+  theme(panel.grid.major.x = element_blank())
+pp_full("gb1")
+
+plot_early <- ggplot(gb_trends, aes(x = month, y = income, color = type)) +
+  geom_ribbon(data = filter(gb_trends, type == "Early", month <= 6),
+              aes(x = month, ymin = -Inf, ymax = Inf, color = NULL), 
+              fill = "grey20", alpha = 0.2) +
+  geom_smooth(data = filter(gb_trends, type == "Early", month <= 4),
+              aes(x = month, y = income), inherit.aes = FALSE,
+              method = "lm", fullrange = TRUE, se = FALSE,
+              color = "#F012BE", size = 1, linetype = "22") +
+   geom_smooth(data = filter(gb_trends, type == "Late", month <= 7),
+              aes(x = month, y = income), inherit.aes = FALSE,
+              method = "lm", fullrange = TRUE, se = FALSE,
+              color = "#001f3f", size = 1, linetype = "22") +
+  geom_vline(xintercept = c(4.5, 8.5), size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#F012BE", "#001f3f"), name = NULL) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(x = "Month", y = "Income") +
+  guides(color = FALSE) +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed") +
+  theme(panel.grid.major.x = element_blank())
+
+plot_late <- ggplot(gb_trends, aes(x = month, y = income, color = type)) +
+  geom_ribbon(data = filter(gb_trends, type == "Early", month >= 7),
+              aes(x = month, ymin = -Inf, ymax = Inf, color = NULL), 
+              fill = "grey20", alpha = 0.2) +
+  geom_smooth(data = filter(gb_trends, type == "Early", month <= 4),
+              aes(x = month, y = income), inherit.aes = FALSE,
+              method = "lm", fullrange = TRUE, se = FALSE,
+              color = "#F012BE", size = 1, linetype = "22") +
+   geom_smooth(data = filter(gb_trends, type == "Late", month <= 7),
+              aes(x = month, y = income), inherit.aes = FALSE,
+              method = "lm", fullrange = TRUE, se = FALSE,
+              color = "#001f3f", size = 1, linetype = "22") +
+  geom_vline(xintercept = c(4.5, 8.5), size = 1) +
+  geom_line(size = 3) +
+  scale_color_manual(values = c("#F012BE", "#001f3f"), name = NULL) +
+  scale_x_continuous(breaks = 1:12) +
+  labs(x = "Month", y = "Income") +
+  theme_bw(base_size = 21, base_family = "Fira Sans Condensed") +
+  theme(panel.grid.major.x = element_blank())
+
+library(patchwork)
+plot_early + plot_late
+pp_full("gb2")
+```
+

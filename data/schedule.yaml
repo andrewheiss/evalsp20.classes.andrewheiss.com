@@ -70,6 +70,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Difference-in-differences I**'
     date: "March 4"
     reading: "08-reading"
+    class: "08-class"
 
   - title: "Problem set 3"
     date: "March 11"
@@ -78,6 +79,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Difference-in-differences II**'
     date: "March 11"
     reading: "09-reading"
+    class: "09-class"
 
   - title: "Problem set 4"
     date: "March 14"

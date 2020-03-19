@@ -1,45 +1,11 @@
 ---
-title: "Difference-in-differences II"
-linktitle: "9: Diff-in-diff II"
-date: "2020-03-11"
-class_date: "2020-03-11"
-bibliography: ../../static/bib/references.bib
-csl: ../../static/bib/chicago-syllabus-no-bib.csl
-output:
-  blogdown::html_page:
-    toc: true
-menu:
-  class:
-    parent: Class sessions
-    weight: 9
-type: docs
-weight: 9
-pdf: /slides/PMAP-8521_2020-03-11.pdf
-thumb: /slides/PMAP-8521_2020-03-11.png
-editor_options: 
-  chunk_output_type: console
+title: "Effect of increasing the weekly earnings limit on unemployment benefits"
+output: 
+  html_document: 
+    toc: yes
 ---
 
-## Slides
-
-`r blogdown::shortcode("slides")`
-
-
-## R stuff
-
-Download all the R stuff we did today if you want to try it on your own computer: [<i class="fas fa-file-archive"></i> `week-9.zip`](/projects/week-9.zip)
-
-
-## Get data for example
-
-Download this CSV file and put it in a folder named `data` in a new RStudio project:
-
-- [<i class="fas fa-table"></i> `injury.csv`](/data/injury.csv)
-
-
-## Complete diff-in-diff analysis
-
-### Background
+# Background
 
 In 1980, Kentucky raised its cap on weekly earnings that were covered by worker's compensation. We want to know if this new policy caused workers to spend more time unemployed. If benefits are not generous enough, then workers could sue companies for on-the-job injuries, while overly generous benefits could cause moral hazard issues and induce workers to be more reckless on the job, or to claim that off-the-job injuries were incurred while at work.
 
@@ -55,9 +21,7 @@ library(scales)      # Format numbers with functions like comma(), percent(), an
 library(broom)       # Convert models to data frames
 library(wooldridge)  # Econometrics-related datasets like injury
 library(huxtable)    # Side-by-side regression tables
-```
 
-```{r settings, include=FALSE}
 # Huxtable likes to automatically format *all* tables, which is annoying. 
 # This turns that off.
 options('huxtable.knit_print_df' = FALSE)
@@ -67,12 +31,8 @@ knitr::opts_chunk$set(fig.align = "center", retina = 2,
                       fig.width = 7, fig.height = 4.2)
 ```
 
-```{r load-data-fake, eval=FALSE}
+```{r load-data, warning=FALSE, message=FALSE}
 injury <- read_csv("data/injury.csv")
-```
-
-```{r load-data-real, include=FALSE, warning=FALSE, message=FALSE}
-injury <- read_csv(here::here("static", "data", "injury.csv"))
 ```
 
 Clean the data a little so that it only includes rows from Kentucky (`ky == 1`), and rename some of the variables to make them easier to work with:
@@ -86,7 +46,7 @@ kentucky <- injury %>%
 ```
 
 
-### Exploratory data analysis
+# Exploratory data analysis
 
 First we can look at the distribution of unemployment benefits across high and low earners (our control and treatment groups):
 
@@ -171,7 +131,7 @@ ggplot(plot_data, aes(x = after_1980, y = mean_duration, color = highearn)) +
 ```
 
 
-### Diff-in-diff by hand
+# Diff-in-diff by hand
 
 We can find that exact difference by filling out the 2x2 before/after treatment/control table:
 
@@ -250,7 +210,7 @@ ggplot(kentucky_diff, aes(x = as.factor(after_1980),
 #   geom_line(aes(group = highearn))
 ```
 
-### Diff-in-diff with regression
+# Diff-in-diff with regression
 
 Calculating all the pieces by hand like that is tedious, so we can use regression to do it instead! Remember that we need to include indicator variables for treatment/control and for before/after, as well as the interaction of the two. Here's what the math equation looks like:
 
@@ -269,7 +229,7 @@ tidy(model_small)
 The coefficient for `highearn:afchnge` is the same as what we found by hand, as it should be! It is statistically significant, so we can be fairly confident that it is not 0.
 
 
-### Diff-in-diff with regression + controls
+# Diff-in-diff with regression + controls
 
 One advantage to using regression for diff-in-diff is that we can include control variables to help isolate the effect. For example, perhaps claims made by construction or manufacturing workers tend to have longer duration than claims made workers in other industries. Or maybe those claiming back injuries tend to have longer claims than those claiming head injuries. We might also want to control for worker demographics such as gender, marital status, and age.
 
@@ -307,25 +267,10 @@ diff_diff_controls <- tidy(model_big) %>%
 After controlling for a host of demographic controls, the diff-in-diff estimate is smaller (`r round(diff_diff_controls, 3)`), indicating that the policy caused a `r percent(diff_diff_controls)` increase in the duration of weeks unemployed following a workplace injury. It is smaller because the other independent variables now explain some of the variation in `log_duration`.
 
 
-### Comparison of results
+# Comparison of results
 
 We can put the model coefficients side-by-side to compare the value for `highearn:afchnge` as we change the model.
 
 ```{r show-tables, message=FALSE}
 huxreg(model_small, model_big)
 ```
-
-
-## Clearest and muddiest things
-
-`r blogdown::shortcode("feedback")`
-
-
-```{r class-stuff, eval=FALSE, include=FALSE}
-library(tidyverse)
-library(wooldridge)
-
-kentucky <- injury %>% 
-  filter(ky == 1)
-```
-
