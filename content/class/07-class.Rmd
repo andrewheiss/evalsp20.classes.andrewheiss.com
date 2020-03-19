@@ -48,6 +48,8 @@ library(scales)  # Format numbers with functions like comma(), percent(), and do
 library(broom)  # Convert models to data frames
 library(patchwork)  # Combine ggplots into single composite plots
 library(MatchIt)  # Match things
+
+set.seed(1234)   # Make all random draws repdroducible
 ```
 
 ```{r load-data-fake, eval=FALSE}

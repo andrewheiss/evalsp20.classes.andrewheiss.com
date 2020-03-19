@@ -65,7 +65,9 @@ library(ggdag)  # Make DAGs
 library(scales)  # Format numbers with functions like comma(), percent(), and dollar()
 library(broom)  # Convert models to data frames
 library(patchwork)  # Combine ggplots into single composite plots
-library(MatchIt)  # Match things</code></pre>
+library(MatchIt)  # Match things
+
+set.seed(1234)   # Make all random draws repdroducible</code></pre>
 <pre class="r"><code>village_randomized &lt;- read_csv(&quot;data/village_randomized.csv&quot;)
 
 math_camp &lt;- read_csv(&quot;data/math_camp.csv&quot;) %&gt;% 
@@ -360,12 +362,12 @@ summary(matched)</code></pre>
 ## undergrad_gpa           2.8           2.8       0.47    -0.007    0.22
 ## gre_quant             142.9         142.9       4.81    -0.056    2.00
 ##               eQQ Mean eQQ Max
-## undergrad_gpa     0.23    0.37
-## gre_quant         2.30    4.00
+## undergrad_gpa     0.22    0.37
+## gre_quant         2.29    4.00
 ## 
 ## Percent Balance Improvement:
 ##               Mean Diff. eQQ Med eQQ Mean eQQ Max
-## undergrad_gpa         98      47       40      18
+## undergrad_gpa         98      47       41      18
 ## gre_quant             98      50       36      20
 ## 
 ## Sample sizes:
@@ -384,8 +386,8 @@ tidy(model_matched)</code></pre>
 ##   term               estimate std.error statistic  p.value
 ##   &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
 ## 1 (Intercept)          136.       0.343     398.  0.      
-## 2 math_campMath camp     8.05     0.412      19.5 1.03e-73</code></pre>
-<p>The 8.05 point increase here is better than the naive estimate, but worse than the educated guess model. Perhaps that’s because the matches aren’t great, or maybe we threw away too much data. There are a host of diagnostics you can look at to see how well things are matched (check <a href="http://gking.harvard.edu/matchit">the documentation for <strong>MatchIt</strong></a> for examples.)</p>
+## 2 math_campMath camp     8.10     0.413      19.6 1.41e-74</code></pre>
+<p>The 8.1 point increase here is better than the naive estimate, but worse than the educated guess model. Perhaps that’s because the matches aren’t great, or maybe we threw away too much data. There are a host of diagnostics you can look at to see how well things are matched (check <a href="http://gking.harvard.edu/matchit">the documentation for <strong>MatchIt</strong></a> for examples.)</p>
 <p>One nice thing about using <code>matchit()</code> is that it also generates a kind of weight based on the distance between points. You can incorporate those weights into the model and get a more accurate estimate:</p>
 <pre class="r"><code>model_matched_weighted &lt;- lm(final_grade ~ math_camp, data = math_camp_matched, weights = weights)
 tidy(model_matched_weighted)</code></pre>
@@ -393,8 +395,8 @@ tidy(model_matched_weighted)</code></pre>
 ##   term               estimate std.error statistic   p.value
 ##   &lt;chr&gt;                 &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;
 ## 1 (Intercept)          135.       0.336     400.  0.       
-## 2 math_campMath camp     9.77     0.405      24.1 6.70e-105</code></pre>
-<p>After using the weights, we find a 9.77 point causal effect. That’s much better than any of the other estimates we’ve tried.</p>
+## 2 math_campMath camp     9.83     0.405      24.3 4.16e-106</code></pre>
+<p>After using the weights, we find a 9.83 point causal effect. That’s much better than any of the other estimates we’ve tried.</p>
 </div>
 <div id="adjustment-with-inverse-probability-weighting" class="section level3">
 <h3>Adjustment with inverse probability weighting</h3>
@@ -557,12 +559,12 @@ means</td>
 <tr class="even">
 <td align="left">Mahalanobis nearest-neighbor
 matching (unweighted)</td>
-<td align="center">8.047</td>
+<td align="center">8.104</td>
 </tr>
 <tr class="odd">
 <td align="left">Mahalanobis nearest-neighbor
 matching (weighted)</td>
-<td align="center">9.77</td>
+<td align="center">9.834</td>
 </tr>
 <tr class="even">
 <td align="left">Inverse probability weights</td>
