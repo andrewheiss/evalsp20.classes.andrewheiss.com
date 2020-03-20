@@ -33,13 +33,13 @@ Remember, if you're struggling, *please* talk to me. Work with classmates too. (
 3. Complete the tasks given in the R Markdown file. Fill out code in the empty chunks provided (you can definitely copy, paste, and adapt from other code in the document or [the class page on RCTs and matching](/class/07-class/)—don't try to write everything from scratch!). You'll need to insert your own code chunks. Rather than typing them by hand (that's tedious!), use the "Insert" button at the top of the editing window, or press "ctrl + alt + I" on Windows, or "⌥ + ⌘ + I" on macOS.
 
 ```{r insert-chunk-button, echo=FALSE, out.width="19%", indent="    "}
-knitr::include_graphics("/img/assignments/insert-chunk-button.png")
+knitr::include_graphics("/img/assignments/insert-chunk-button.png", error = FALSE)
 ```
 
 4. When you're all done, click on the "Knit" button at the top of the editing window and create a PDF or Word document of your problem set. Upload that file to iCollege.
 
 ```{r knit-button, echo=FALSE, out.width="30%", indent="    "}
-knitr::include_graphics("/img/assignments/knit-button.png")
+knitr::include_graphics("/img/assignments/knit-button.png", error = FALSE)
 ```
 
 

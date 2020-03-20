@@ -39,7 +39,7 @@ Remember, if you're struggling, *please* talk to me. Work with classmates too. D
 4. When you're all done, click on the "Knit" button at the top of the editing window and create a PDF or Word document of your problem set. Upload that file to iCollege.
 
 ```{r knit-button, echo=FALSE, out.width="30%"}
-knitr::include_graphics("/img/assignments/knit-button.png")
+knitr::include_graphics("/img/assignments/knit-button.png", error = FALSE)
 ```
 
 

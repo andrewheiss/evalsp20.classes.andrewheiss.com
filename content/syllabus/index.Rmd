@@ -73,7 +73,7 @@ Even experienced programmers and evaluators find themselves bashing their heads 
 
 ```{r echo=FALSE, out.width="60%"}
 # https://twitter.com/allison_horst/status/1213275783675822080
-knitr::include_graphics("/img/syllabus/hosrt_error_tweet.png")
+knitr::include_graphics("/img/syllabus/hosrt_error_tweet.png", error = FALSE)
 ```
 
 [![Alison Horst: Gator error](/img/syllabus/gator_error.jpg)](https://twitter.com/allison_horst/status/1213275783675822080)

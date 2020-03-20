@@ -105,6 +105,7 @@ library(huxtable)    # Side-by-side regression tables</code></pre>
   geom_point(size = 0.5, alpha = 0.2) +
   stat_summary(geom = &quot;point&quot;, fun.y = &quot;mean&quot;, size = 5, color = &quot;red&quot;) +
   facet_wrap(~ after_1980)</code></pre>
+<pre><code>## Warning: `fun.y` is deprecated. Use `fun` instead.</code></pre>
 <p><img src="/class/09-class_files/figure-html/plot-means-with-points-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>But we can also calculate the mean and 95% confidence interval:</p>
 <pre class="r"><code>ggplot(kentucky, aes(x = factor(highearn), y = log_duration)) +
@@ -206,7 +207,7 @@ diff_diff &lt;- diff_treatment_before_after - diff_control_before_after
 diff_before_treatment_control &lt;- before_treatment - before_control
 diff_after_treatment_control &lt;- after_treatment - after_control
 other_diff_diff &lt;- diff_after_treatment_control - diff_before_treatment_control</code></pre>
-<p>The diff-in-diff estimate is 0.191, which means that the program causes an increase in unemployment duration of 0.19 logged weeks. Logged weeks is nonsensical, though, so we have to interpret it with percentages (<a href="https://stats.stackexchange.com/a/18639/3025">here’s a handy guide!</a>; this is Example B, where the dependent/outcome variable is logged). Receiving the treatment (i.e. being a high earner after the change in policy) causes a 19.1% increase in the length of unemployment.</p>
+<p>The diff-in-diff estimate is 0.191, which means that the program causes an increase in unemployment duration of 0.19 logged weeks. Logged weeks is nonsensical, though, so we have to interpret it with percentages (<a href="https://stats.stackexchange.com/a/18639/3025">here’s a handy guide!</a>; this is Example B, where the dependent/outcome variable is logged). Receiving the treatment (i.e. being a high earner after the change in policy) causes a 19% increase in the length of unemployment.</p>
 <pre class="r"><code>ggplot(kentucky_diff, aes(x = as.factor(after_1980), 
                           y = mean_duration, 
                           color = as.factor(highearn))) + 
@@ -302,7 +303,7 @@ tidy(model_big)</code></pre>
 diff_diff_controls &lt;- tidy(model_big) %&gt;% 
   filter(term == &quot;highearn:after_1980&quot;) %&gt;% 
   pull(estimate)</code></pre>
-<p>After controlling for a host of demographic controls, the diff-in-diff estimate is smaller (0.169), indicating that the policy caused a 16.9% increase in the duration of weeks unemployed following a workplace injury. It is smaller because the other independent variables now explain some of the variation in <code>log_duration</code>.</p>
+<p>After controlling for a host of demographic controls, the diff-in-diff estimate is smaller (0.169), indicating that the policy caused a 17% increase in the duration of weeks unemployed following a workplace injury. It is smaller because the other independent variables now explain some of the variation in <code>log_duration</code>.</p>
 </div>
 <div id="comparison-of-results" class="section level3">
 <h3>Comparison of results</h3>
