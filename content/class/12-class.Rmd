@@ -1,6 +1,6 @@
 ---
-title: "Instrumental variables II and regression discontinuity II"
-linktitle: "12: IV II and RDD II"
+title: "Instrumental variables I & II"
+linktitle: "12: IV I & II"
 date: "2020-04-08"
 class_date: "2020-04-08"
 bibliography: ../../static/bib/references.bib

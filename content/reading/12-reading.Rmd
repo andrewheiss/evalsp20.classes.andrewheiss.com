@@ -1,6 +1,6 @@
 ---
-title: "Instrumental variables II & Regression discontinuity II"
-linktitle: "12: IV II & RDD II"
+title: "Instrumental variables I & II"
+linktitle: "12: IV I & II"
 date: "2020-04-08"
 read_date: "2020-04-08"
 menu:
@@ -14,4 +14,6 @@ csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
 
 ## Required
 
-- Review the readings from [last week](/reading/11-reading/) and [the week before](/reading/10-reading/)
+- <i class="fas fa-book"></i> Chapter 5 in *Impact Evaluation in Practice* [@wb-eval]
+- <i class="fas fa-book"></i> Chapter 3 in *Mastering 'Metrics* [@AngristPischke:2015]
+- <i class="fas fa-book"></i> "Instrumental variables" in *Causal Inference: The Mixtape* [@mixtape]
