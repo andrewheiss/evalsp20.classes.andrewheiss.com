@@ -1,0 +1,1423 @@
+---
+title: Side-by-side regression tables
+date: "2020-03-30"
+menu:
+  reference:
+    parent: Reference
+    weight: 3
+type: docs
+weight: 3
+output:
+  blogdown::html_page:
+      toc: TRUE
+---
+
+
+<div id="TOC">
+<ul>
+<li><a href="#example-models">Example models</a></li>
+<li><a href="#huxtables-huxreg"><strong>huxtable</strong>’s <code>huxreg()</code></a><ul>
+<li><a href="#installing">Installing</a></li>
+<li><a href="#basic-usage">Basic usage</a></li>
+<li><a href="#upside-html-and-word">Upside: HTML and Word</a></li>
+<li><a href="#downside-1-huxtable-reformats-all-your-tables">Downside 1: <strong>huxtable</strong> reformats all your tables</a></li>
+<li><a href="#downside-2-knitting-to-pdf-is-fragile">Downside 2: Knitting to PDF is fragile</a></li>
+</ul></li>
+<li><a href="#modelsummarys-msummary"><strong>modelsummary</strong>’s <code>msummary()</code></a><ul>
+<li><a href="#installing-1">Installing</a></li>
+<li><a href="#basic-usage-1">Basic usage</a></li>
+<li><a href="#upside-1-more-customizable">Upside 1: More customizable</a></li>
+<li><a href="#upside-2-good-pdf-support">Upside 2: Good PDF support</a></li>
+<li><a href="#downside-1-no-word-support">Downside 1: No Word support</a></li>
+<li><a href="#downside-2-some-manual-work-needed-to-knit-to-pdf">Downside 2: Some manual work needed to knit to PDF</a></li>
+</ul></li>
+<li><a href="#minimal-rmd-files-and-example-output">Minimal Rmd files and example output</a><ul>
+<li><a href="#huxtable-pdf"><strong>huxtable</strong> PDF</a></li>
+<li><a href="#modelsummary-pdf"><strong>modelsummary</strong> PDF</a></li>
+<li><a href="#modelsummary-html"><strong>modelsummary</strong> HTML</a></li>
+<li><a href="#modelsummary-rtf"><strong>modelsummary</strong> RTF</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>It’s often helpful to put the results from regression models in a side-by-side table so you can compare coefficients across different model specifications. If you’re unfamiliar with these kinds of tables, <a href="http://svmiller.com/blog/2014/08/reading-a-regression-table-a-guide-for-students/">check out this helpful guide to how to read them</a>.</p>
+<p>Making these tables with R is generally fairly simple, but you need to do a couple extra steps to make them look nice consistently. There are two modern R packages that work fairly well for creating these tables:</p>
+<ul>
+<li>The <code>huxreg()</code> function in the <a href="https://hughjonesd.github.io/huxtable/"><strong>huxtable</strong> package</a></li>
+<li>The <code>msummary()</code> function in the <a href="https://github.com/vincentarelbundock/modelsummary"><strong>modelsummary</strong> package</a></li>
+</ul>
+<p>These two functions work slightly differently and you need to make a few minor adjustments depending on how you’re knitting your document. Included below is a helpful summary of the capabilities and limitations of each of these packages, as well as some example code for fixing these limitations.</p>
+<table>
+<colgroup>
+<col width="26%" />
+<col width="20%" />
+<col width="9%" />
+<col width="13%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Package</th>
+<th align="left">Function</th>
+<th align="left">HTML</th>
+<th align="left">PDF</th>
+<th align="left">Word</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left"><strong>huxtable</strong></td>
+<td align="left"><code>huxreg()</code></td>
+<td align="left">Yes</td>
+<td align="left">Fragile</td>
+<td align="left">Yes</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>modelsummary</strong></td>
+<td align="left"><code>msummary()</code></td>
+<td align="left">Yes</td>
+<td align="left">Yes</td>
+<td align="left">No (but yes to RTF)</td>
+</tr>
+</tbody>
+</table>
+<div id="example-models" class="section level2">
+<h2>Example models</h2>
+<pre class="r"><code>library(tidyverse)
+
+model1 &lt;- lm(hwy ~ cyl + displ, data = mpg)
+model2 &lt;- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 &lt;- lm(hwy ~ cyl + displ + year + drv, data = mpg)</code></pre>
+</div>
+<div id="huxtables-huxreg" class="section level2">
+<h2><strong>huxtable</strong>’s <code>huxreg()</code></h2>
+<div id="installing" class="section level3">
+<h3>Installing</h3>
+<p><strong>huxtable</strong> is published on CRAN, so use the “Packages” panel in RStudio to install <code>huxtable</code>, or run this:</p>
+<pre class="r"><code>install.packages(&quot;huxtable&quot;, dependencies = TRUE)</code></pre>
+<p>To knit to Word, you also need the <strong>flextable</strong> package, and R doesn’t install that automatically for whatever reason, so install that too from the “Packages” panel, or run this too:</p>
+<pre class="r"><code>install.packages(&quot;flextable&quot;, dependencies = TRUE)</code></pre>
+</div>
+<div id="basic-usage" class="section level3">
+<h3>Basic usage</h3>
+<p>Feed <code>huxreg()</code> a bunch of models:</p>
+<pre class="r"><code>library(huxtable)
+
+huxreg(model1, model2, model3)</code></pre>
+<table class="huxtable" style="border-collapse: collapse; margin-bottom: 2em; margin-top: 2em; width: 50%; margin-left: auto; margin-right: auto;  ">
+<col><col><col><col><tr>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(1)</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(2)</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(3)</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(Intercept)</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">38.216 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-259.122 *&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-251.317 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(1.048)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(109.159)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(85.608)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">cyl</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.354 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.307 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.398 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.416)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.411)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.327)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">displ</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.960 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-2.091 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.287 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.519)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.515)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.454)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">year</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.148 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.142 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.055)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.043)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">drvf</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">4.978 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.503)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">drvr</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">4.965 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(0.697)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">N</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">R2</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.605&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.617&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.767&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">logLik</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-640.390&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-636.675&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-578.522&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">AIC</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">1288.779&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">1283.349&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">1171.043&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td colspan="4" style="vertical-align: top; text-align: left; white-space: normal; padding: 4pt 4pt 4pt 4pt;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</td>
+</tr>
+</table>
+
+<p>Add column names:</p>
+<pre class="r"><code>huxreg(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3))</code></pre>
+<table class="huxtable" style="border-collapse: collapse; margin-bottom: 2em; margin-top: 2em; width: 50%; margin-left: auto; margin-right: auto;  ">
+<col><col><col><col><tr>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">A</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">B</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">C</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(Intercept)</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">38.216 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-259.122 *&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-251.317 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(1.048)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(109.159)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(85.608)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">cyl</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.354 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.307 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.398 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.416)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.411)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.327)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">displ</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.960 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-2.091 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1.287 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.519)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.515)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.454)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">year</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.148 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.142 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.055)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.043)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">drvf</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">4.978 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.503)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">drvr</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">4.965 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(0.697)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">N</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">234&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">R2</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.605&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.617&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.767&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">logLik</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-640.390&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-636.675&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-578.522&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">AIC</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">1288.779&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">1283.349&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">1171.043&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td colspan="4" style="vertical-align: top; text-align: left; white-space: normal; padding: 4pt 4pt 4pt 4pt;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</td>
+</tr>
+</table>
+
+</div>
+<div id="upside-html-and-word" class="section level3">
+<h3>Upside: HTML and Word</h3>
+<p>Knitting to HTML and Word works pretty flawlessly.</p>
+</div>
+<div id="downside-1-huxtable-reformats-all-your-tables" class="section level3">
+<h3>Downside 1: <strong>huxtable</strong> reformats all your tables</h3>
+<p>If your document creates any other tables (like with <code>tidy()</code>), <strong>huxtable</strong> automatically formats these tables in a fancy way. If you don’t want that, you can turn it off with this code—put it at the top of your document near where you load your libraries:</p>
+<pre class="r"><code># Huxtable likes to automatically format *all* tables, which is annoying. 
+# This turns that off.
+options(&#39;huxtable.knit_print_df&#39; = FALSE)</code></pre>
+</div>
+<div id="downside-2-knitting-to-pdf-is-fragile" class="section level3">
+<h3>Downside 2: Knitting to PDF is fragile</h3>
+<p>In order to knit to PDF, you need to install LaTeX, which you did by <a href="/reference/install/#install-tinytex">following these instructions</a>. For mysterious reasons, you need to do this every time you create or copy a new RStudio.cloud project (all other packages that I pre-install for you carry over to copied projects; <strong>tinytex</strong> does not). Make sure you run this in the console after you create or copy a project:</p>
+<pre class="r"><code>tinytex::install_tinytex()</code></pre>
+<p>When using <strong>huxtable</strong>, before knitting to PDF for the first time on your computer (or in an RStudio.cloud instance), you need to run this in your console to install the LaTeX packages that R uses to knit <strong>huxtable</strong> tables to PDF:</p>
+<pre class="r"><code>huxtable::install_latex_dependencies()</code></pre>
+<p>If you’re using <strong>tinytex</strong>, you’ll also need to run this once on your computer (or once per RStudio.cloud instance):</p>
+<pre class="r"><code>tinytex::tlmgr_install(&quot;unicode-math&quot;)</code></pre>
+<p>Now it should work!</p>
+<p>However, your tables will often be misaligned and sometimes won’t fit on the page. There’s no easy way to fix this :(</p>
+</div>
+</div>
+<div id="modelsummarys-msummary" class="section level2">
+<h2><strong>modelsummary</strong>’s <code>msummary()</code></h2>
+<div id="installing-1" class="section level3">
+<h3>Installing</h3>
+<p><strong>modelsummary</strong> is published on CRAN, so use the “Packages” panel in RStudio to install <code>modelsummary</code>, or run this:</p>
+<pre class="r"><code>install.packages(&quot;modelsummary&quot;, dependencies = TRUE)</code></pre>
+<p><strong>modelsummary</strong> uses the <a href="https://gt.rstudio.com/"><strong>gt</strong> package</a> behind the scenes to actually make the tables, and <strong>gt</strong> isn’t on CRAN yet, so you have to install it in a special way (<a href="https://github.com/vincentarelbundock/modelsummary#installation">see here for details</a>):</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)
+remotes::install_github(&#39;rstudio/gt&#39;)</code></pre>
+</div>
+<div id="basic-usage-1" class="section level3">
+<h3>Basic usage</h3>
+<p>Feed <code>msummary()</code> a <em>list</em> of models. Unlike <code>huxreg()</code>, you have to put the models in a <code>list()</code>:</p>
+<pre class="r"><code>library(modelsummary)
+
+msummary(list(model1, model2, model3))</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#hbgnmrrfbr .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#hbgnmrrfbr .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#hbgnmrrfbr .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#hbgnmrrfbr .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#hbgnmrrfbr .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#hbgnmrrfbr .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#hbgnmrrfbr .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#hbgnmrrfbr .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#hbgnmrrfbr .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#hbgnmrrfbr .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#hbgnmrrfbr .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#hbgnmrrfbr .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#hbgnmrrfbr .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#hbgnmrrfbr .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#hbgnmrrfbr .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hbgnmrrfbr .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#hbgnmrrfbr .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#hbgnmrrfbr .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#hbgnmrrfbr .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#hbgnmrrfbr .gt_left {
+  text-align: left;
+}
+
+#hbgnmrrfbr .gt_center {
+  text-align: center;
+}
+
+#hbgnmrrfbr .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#hbgnmrrfbr .gt_font_normal {
+  font-weight: normal;
+}
+
+#hbgnmrrfbr .gt_font_bold {
+  font-weight: bold;
+}
+
+#hbgnmrrfbr .gt_font_italic {
+  font-style: italic;
+}
+
+#hbgnmrrfbr .gt_super {
+  font-size: 65%;
+}
+
+#hbgnmrrfbr .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="hbgnmrrfbr" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">       </th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Model 1</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Model 2</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Model 3</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left">(Intercept)</td>
+      <td class="gt_row gt_left">38.216</td>
+      <td class="gt_row gt_left">-259.122</td>
+      <td class="gt_row gt_left">-251.317</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(1.048)</td>
+      <td class="gt_row gt_left">(109.159)</td>
+      <td class="gt_row gt_left">(85.608)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">cyl</td>
+      <td class="gt_row gt_left">-1.354</td>
+      <td class="gt_row gt_left">-1.307</td>
+      <td class="gt_row gt_left">-1.398</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.416)</td>
+      <td class="gt_row gt_left">(0.411)</td>
+      <td class="gt_row gt_left">(0.327)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">displ</td>
+      <td class="gt_row gt_left">-1.960</td>
+      <td class="gt_row gt_left">-2.091</td>
+      <td class="gt_row gt_left">-1.287</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.519)</td>
+      <td class="gt_row gt_left">(0.515)</td>
+      <td class="gt_row gt_left">(0.454)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">year</td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">0.148</td>
+      <td class="gt_row gt_left">0.142</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.055)</td>
+      <td class="gt_row gt_left">(0.043)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">drvf</td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">4.978</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.503)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">drvr</td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">4.965</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.697)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">Num.Obs.</td>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">234</td>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">234</td>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">234</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">R2</td>
+      <td class="gt_row gt_left">0.605</td>
+      <td class="gt_row gt_left">0.617</td>
+      <td class="gt_row gt_left">0.767</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">Adj.R2</td>
+      <td class="gt_row gt_left">0.601</td>
+      <td class="gt_row gt_left">0.612</td>
+      <td class="gt_row gt_left">0.762</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">AIC</td>
+      <td class="gt_row gt_left">1288.8</td>
+      <td class="gt_row gt_left">1283.3</td>
+      <td class="gt_row gt_left">1171.0</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">BIC</td>
+      <td class="gt_row gt_left">1302.6</td>
+      <td class="gt_row gt_left">1300.6</td>
+      <td class="gt_row gt_left">1195.2</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">Log.Lik.</td>
+      <td class="gt_row gt_left">-640.390</td>
+      <td class="gt_row gt_left">-636.675</td>
+      <td class="gt_row gt_left">-578.522</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
+<p>Add column names:</p>
+<pre class="r"><code>msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3))</code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#ryzkxlnvho .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#ryzkxlnvho .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#ryzkxlnvho .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#ryzkxlnvho .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#ryzkxlnvho .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#ryzkxlnvho .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#ryzkxlnvho .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#ryzkxlnvho .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ryzkxlnvho .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ryzkxlnvho .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#ryzkxlnvho .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#ryzkxlnvho .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#ryzkxlnvho .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#ryzkxlnvho .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#ryzkxlnvho .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ryzkxlnvho .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ryzkxlnvho .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#ryzkxlnvho .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ryzkxlnvho .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#ryzkxlnvho .gt_left {
+  text-align: left;
+}
+
+#ryzkxlnvho .gt_center {
+  text-align: center;
+}
+
+#ryzkxlnvho .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#ryzkxlnvho .gt_font_normal {
+  font-weight: normal;
+}
+
+#ryzkxlnvho .gt_font_bold {
+  font-weight: bold;
+}
+
+#ryzkxlnvho .gt_font_italic {
+  font-style: italic;
+}
+
+#ryzkxlnvho .gt_super {
+  font-size: 65%;
+}
+
+#ryzkxlnvho .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="ryzkxlnvho" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">       </th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">A</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">B</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">C</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left">(Intercept)</td>
+      <td class="gt_row gt_left">38.216</td>
+      <td class="gt_row gt_left">-259.122</td>
+      <td class="gt_row gt_left">-251.317</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(1.048)</td>
+      <td class="gt_row gt_left">(109.159)</td>
+      <td class="gt_row gt_left">(85.608)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">cyl</td>
+      <td class="gt_row gt_left">-1.354</td>
+      <td class="gt_row gt_left">-1.307</td>
+      <td class="gt_row gt_left">-1.398</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.416)</td>
+      <td class="gt_row gt_left">(0.411)</td>
+      <td class="gt_row gt_left">(0.327)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">displ</td>
+      <td class="gt_row gt_left">-1.960</td>
+      <td class="gt_row gt_left">-2.091</td>
+      <td class="gt_row gt_left">-1.287</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.519)</td>
+      <td class="gt_row gt_left">(0.515)</td>
+      <td class="gt_row gt_left">(0.454)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">year</td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">0.148</td>
+      <td class="gt_row gt_left">0.142</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.055)</td>
+      <td class="gt_row gt_left">(0.043)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">drvf</td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">4.978</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.503)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">drvr</td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">4.965</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left"></td>
+      <td class="gt_row gt_left">(0.697)</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">Num.Obs.</td>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">234</td>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">234</td>
+      <td class="gt_row gt_left" style="border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: #000000;">234</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">R2</td>
+      <td class="gt_row gt_left">0.605</td>
+      <td class="gt_row gt_left">0.617</td>
+      <td class="gt_row gt_left">0.767</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">Adj.R2</td>
+      <td class="gt_row gt_left">0.601</td>
+      <td class="gt_row gt_left">0.612</td>
+      <td class="gt_row gt_left">0.762</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">AIC</td>
+      <td class="gt_row gt_left">1288.8</td>
+      <td class="gt_row gt_left">1283.3</td>
+      <td class="gt_row gt_left">1171.0</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">BIC</td>
+      <td class="gt_row gt_left">1302.6</td>
+      <td class="gt_row gt_left">1300.6</td>
+      <td class="gt_row gt_left">1195.2</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">Log.Lik.</td>
+      <td class="gt_row gt_left">-640.390</td>
+      <td class="gt_row gt_left">-636.675</td>
+      <td class="gt_row gt_left">-578.522</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
+</div>
+<div id="upside-1-more-customizable" class="section level3">
+<h3>Upside 1: More customizable</h3>
+<p><strong>modelsummary</strong> and the <strong>gt</strong> package it uses both have like a billion options you can use to get the table customized exactly how you want:</p>
+<ul>
+<li><a href="https://github.com/vincentarelbundock/modelsummary"><strong>modelsummary</strong> details</a></li>
+<li><a href="https://gt.rstudio.com/"><strong>gt</strong> details</a></li>
+</ul>
+</div>
+<div id="upside-2-good-pdf-support" class="section level3">
+<h3>Upside 2: Good PDF support</h3>
+<p>Unlike <strong>huxtable</strong>, knitted PDF tables generally look a lot better.</p>
+</div>
+<div id="downside-1-no-word-support" class="section level3">
+<h3>Downside 1: No Word support</h3>
+<p>This is a big downside. There’s no support for knitting to Word (this is a general issue with the <strong>gt</strong> package). You can knit to RTF just fine and open <em>that</em> in Word, but you can’d knit to Word (if you do, the table text will all be there, but in one really long column).</p>
+<p>To knit to RTF, change <code>word_document</code> in your YAML metadata to <code>rtf_document</code>:</p>
+<pre class="yaml"><code>output:
+  rtf_document: default</code></pre>
+</div>
+<div id="downside-2-some-manual-work-needed-to-knit-to-pdf" class="section level3">
+<h3>Downside 2: Some manual work needed to knit to PDF</h3>
+<p>When you use <code>huxreg()</code>, it automatically adapts to whatever output format you’re using (HTML, PDF, Word, etc.). <code>msummary()</code> needs a little help to knit to PDF.</p>
+<p>First, you need to tell the PDF template to use a few LaTeX packages. Add this <code>header-includes</code> section to your YAML metadata:</p>
+<pre class="yaml"><code>title: &quot;Whatever&quot;
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+# Add this stuff here:
+header-includes:
+- \usepackage{caption}
+- \usepackage{longtable}
+- \usepackage{booktabs}</code></pre>
+<p>Second, you need to pipe any <code>msummary()</code>s into a special <code>knit_latex()</code> function:</p>
+<pre class="r"><code>msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3)) %&gt;% knit_latex()</code></pre>
+<p>That’s all. Now you’ll have pretty PDFs.</p>
+<p><strong>Importantly</strong>, if you knit to HTML now and leave <code>knit_latex()</code> in your code, you won’t see any tables. <em>You need to manually take off the <code>knit_latex()</code> command if you’re knitting to any format other than PDF</em>. Because of that, it might be helpful to either include both lines and comment out one as needed:</p>
+<pre class="r"><code># When knitting to HTML
+msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3))
+
+# When knitting to PDF
+msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3)) %&gt;% knit_latex()</code></pre>
+<p>…or add/remove a comment before <code>%&gt;% knit_latex()</code>:</p>
+<pre class="r"><code># Take off the &quot;#&quot; when knitting to PDF
+msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3)) #%&gt;% knit_latex()</code></pre>
+</div>
+</div>
+<div id="minimal-rmd-files-and-example-output" class="section level2">
+<h2>Minimal Rmd files and example output</h2>
+<div id="huxtable-pdf" class="section level3">
+<h3><strong>huxtable</strong> PDF</h3>
+<pre><code>---
+title: &quot;`huxreg()` example&quot;
+output:
+  pdf_document: default
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(huxtable)
+
+model1 &lt;- lm(hwy ~ cyl + displ, data = mpg)
+model2 &lt;- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 &lt;- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}
+huxreg(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3))
+```</code></pre>
+<p><img src="/img/regtables/huxreg_pdf.png" width="75%" /></p>
+</div>
+<div id="modelsummary-pdf" class="section level3">
+<h3><strong>modelsummary</strong> PDF</h3>
+<pre><code>---
+title: &quot;`msummary()` example&quot;
+output:
+  pdf_document: default
+header-includes:
+- \usepackage{caption}
+- \usepackage{longtable}
+- \usepackage{booktabs}
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(modelsummary)
+
+model1 &lt;- lm(hwy ~ cyl + displ, data = mpg)
+model2 &lt;- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 &lt;- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}
+msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3)) %&gt;% knit_latex()
+```</code></pre>
+<p><img src="/img/regtables/msummary_pdf.png" width="75%" /></p>
+</div>
+<div id="modelsummary-html" class="section level3">
+<h3><strong>modelsummary</strong> HTML</h3>
+<pre><code>---
+title: &quot;`msummary()` example&quot;
+output:
+  html_document: default
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(modelsummary)
+
+model1 &lt;- lm(hwy ~ cyl + displ, data = mpg)
+model2 &lt;- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 &lt;- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}
+msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3))
+```</code></pre>
+<p><img src="/img/regtables/msummary_html.png" width="75%" /></p>
+</div>
+<div id="modelsummary-rtf" class="section level3">
+<h3><strong>modelsummary</strong> RTF</h3>
+<pre><code>---
+title: &quot;`msummary()` example&quot;
+output:
+  rtf_document: default
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(modelsummary)
+
+model1 &lt;- lm(hwy ~ cyl + displ, data = mpg)
+model2 &lt;- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 &lt;- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}
+msummary(list(&quot;A&quot; = model1, &quot;B&quot; = model2, &quot;C&quot; = model3))
+```</code></pre>
+<p><img src="/img/regtables/msummary_rtf.png" width="75%" /></p>
+</div>
+</div>

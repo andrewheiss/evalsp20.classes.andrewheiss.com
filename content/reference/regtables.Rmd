@@ -1,0 +1,335 @@
+---
+title: Side-by-side regression tables
+date: "2020-03-30"
+menu:
+  reference:
+    parent: Reference
+    weight: 3
+type: docs
+weight: 3
+output:
+  blogdown::html_page:
+      toc: TRUE
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+```
+
+It's often helpful to put the results from regression models in a side-by-side table so you can compare coefficients across different model specifications. If you're unfamiliar with these kinds of tables, [check out this helpful guide to how to read them](http://svmiller.com/blog/2014/08/reading-a-regression-table-a-guide-for-students/).
+
+Making these tables with R is generally fairly simple, but you need to do a couple extra steps to make them look nice consistently. There are two modern R packages that work fairly well for creating these tables:
+
+- The `huxreg()` function in the [**huxtable** package](https://hughjonesd.github.io/huxtable/)
+- The `msummary()` function in the [**modelsummary** package](https://github.com/vincentarelbundock/modelsummary)
+
+These two functions work slightly differently and you need to make a few minor adjustments depending on how you're knitting your document. Included below is a helpful summary of the capabilities and limitations of each of these packages, as well as some example code for fixing these limitations.
+
+```{r echo=FALSE, results="asis"}
+library(magrittr)
+
+tibble::tribble(
+  ~Package, ~Function, ~HTML, ~PDF, ~Word,
+  "**huxtable**", "`huxreg()`", "Yes", "Fragile", "Yes",
+  "**modelsummary**", "`msummary()`", "Yes", "Yes", "No (but yes to RTF)",
+) %>% 
+  pander::pandoc.table(justify = "lllll")
+```
+
+## Example models
+
+```{r build-models,  warning=FALSE, message=FALSE}
+library(tidyverse)
+
+model1 <- lm(hwy ~ cyl + displ, data = mpg)
+model2 <- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 <- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+## **huxtable**'s `huxreg()`
+
+### Installing
+
+**huxtable** is published on CRAN, so use the "Packages" panel in RStudio to install `huxtable`, or run this:
+
+```{r eval=FALSE}
+install.packages("huxtable", dependencies = TRUE)
+```
+
+To knit to Word, you also need the **flextable** package, and R doesn't install that automatically for whatever reason, so install that too from the "Packages" panel, or run this too:
+
+```{r eval=FALSE}
+install.packages("flextable", dependencies = TRUE)
+```
+
+### Basic usage
+
+Feed `huxreg()` a bunch of models:
+
+```{r warning=FALSE, message=FALSE}
+library(huxtable)
+
+huxreg(model1, model2, model3)
+```
+
+Add column names:
+
+```{r}
+huxreg(list("A" = model1, "B" = model2, "C" = model3))
+```
+
+### Upside: HTML and Word
+
+Knitting to HTML and Word works pretty flawlessly.
+
+
+### Downside 1: **huxtable** reformats all your tables
+
+If your document creates any other tables (like with `tidy()`), **huxtable** automatically formats these tables in a fancy way. If you don't want that, you can turn it off with this code—put it at the top of your document near where you load your libraries:
+
+```{r eval=FALSE}
+# Huxtable likes to automatically format *all* tables, which is annoying. 
+# This turns that off.
+options('huxtable.knit_print_df' = FALSE)
+```
+
+
+### Downside 2: Knitting to PDF is fragile
+
+In order to knit to PDF, you need to install LaTeX, which you did by [following these instructions](/reference/install/#install-tinytex). For mysterious reasons, you need to do this every time you create or copy a new RStudio.cloud project (all other packages that I pre-install for you carry over to copied projects; **tinytex** does not). Make sure you run this in the console after you create or copy a project:
+
+```{r eval=FALSE}
+tinytex::install_tinytex()
+```
+
+When using **huxtable**, before knitting to PDF for the first time on your computer (or in an RStudio.cloud instance), you need to run this in your console to install the LaTeX packages that R uses to knit **huxtable** tables to PDF:
+
+```{r eval=FALSE}
+huxtable::install_latex_dependencies()
+```
+
+If you're using **tinytex**, you'll also need to run this once on your computer (or once per RStudio.cloud instance):
+
+```{r eval=FALSE}
+tinytex::tlmgr_install("unicode-math")
+```
+
+Now it should work! 
+
+However, your tables will often be misaligned and sometimes won't fit on the page. There's no easy way to fix this :(
+
+
+## **modelsummary**'s `msummary()`
+
+### Installing
+
+**modelsummary** is published on CRAN, so use the "Packages" panel in RStudio to install `modelsummary`, or run this:
+
+```{r eval=FALSE}
+install.packages("modelsummary", dependencies = TRUE)
+```
+
+**modelsummary** uses the [**gt** package](https://gt.rstudio.com/) behind the scenes to actually make the tables, and **gt** isn't on CRAN yet, so you have to install it in a special way ([see here for details](https://github.com/vincentarelbundock/modelsummary#installation)):
+
+```{r eval=FALSE}
+install.packages("remotes")
+remotes::install_github('rstudio/gt')
+```
+
+### Basic usage
+
+Feed `msummary()` a *list* of models. Unlike `huxreg()`, you have to put the models in a `list()`:
+
+```{r warning=FALSE, message=FALSE}
+library(modelsummary)
+
+msummary(list(model1, model2, model3))
+```
+
+Add column names:
+
+```{r}
+msummary(list("A" = model1, "B" = model2, "C" = model3))
+```
+
+### Upside 1: More customizable
+
+**modelsummary** and the **gt** package it uses both have like a billion options you can use to get the table customized exactly how you want:
+
+- [**modelsummary** details](https://github.com/vincentarelbundock/modelsummary)
+- [**gt** details](https://gt.rstudio.com/)
+
+### Upside 2: Good PDF support
+
+Unlike **huxtable**, knitted PDF tables generally look a lot better.
+
+
+### Downside 1: No Word support
+
+This is a big downside. There's no support for knitting to Word (this is a general issue with the **gt** package). You can knit to RTF just fine and open *that* in Word, but you can'd knit to Word (if you do, the table text will all be there, but in one really long column).
+
+To knit to RTF, change `word_document` in your YAML metadata to `rtf_document`:
+
+```yaml
+output:
+  rtf_document: default
+```
+
+### Downside 2: Some manual work needed to knit to PDF
+
+When you use `huxreg()`, it automatically adapts to whatever output format you're using (HTML, PDF, Word, etc.). `msummary()` needs a little help to knit to PDF.
+
+First, you need to tell the PDF template to use a few LaTeX packages. Add this `header-includes` section to your YAML metadata:
+
+```yaml
+title: "Whatever"
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+# Add this stuff here:
+header-includes:
+- \usepackage{caption}
+- \usepackage{longtable}
+- \usepackage{booktabs}
+```
+
+Second, you need to pipe any `msummary()`s into a special `knit_latex()` function:
+
+```{r, eval=FALSE}
+msummary(list("A" = model1, "B" = model2, "C" = model3)) %>% knit_latex()
+```
+
+That's all. Now you'll have pretty PDFs. 
+
+**Importantly**, if you knit to HTML now and leave `knit_latex()` in your code, you won't see any tables. *You need to manually take off the `knit_latex()` command if you're knitting to any format other than PDF*. Because of that, it might be helpful to either include both lines and comment out one as needed: 
+
+```{r eval=FALSE}
+# When knitting to HTML
+msummary(list("A" = model1, "B" = model2, "C" = model3))
+
+# When knitting to PDF
+msummary(list("A" = model1, "B" = model2, "C" = model3)) %>% knit_latex()
+```
+
+…or add/remove a comment before `%>% knit_latex()`:
+
+```{r eval=FALSE}
+# Take off the "#" when knitting to PDF
+msummary(list("A" = model1, "B" = model2, "C" = model3)) #%>% knit_latex()
+```
+
+
+## Minimal Rmd files and example output
+
+### **huxtable** PDF
+
+````
+---
+title: "`huxreg()` example"
+output:
+  pdf_document: default
+---
+
+```{r warning=FALSE, message=FALSE}`r ''`
+library(tidyverse)
+library(huxtable)
+
+model1 <- lm(hwy ~ cyl + displ, data = mpg)
+model2 <- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 <- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}`r ''`
+huxreg(list("A" = model1, "B" = model2, "C" = model3))
+```
+````
+
+```{r, echo=FALSE, out.width="75%"}
+include_graphics("/img/regtables/huxreg_pdf.png", error = FALSE)
+```
+
+### **modelsummary** PDF
+
+````
+---
+title: "`msummary()` example"
+output:
+  pdf_document: default
+header-includes:
+- \usepackage{caption}
+- \usepackage{longtable}
+- \usepackage{booktabs}
+---
+
+```{r warning=FALSE, message=FALSE}`r ''`
+library(tidyverse)
+library(modelsummary)
+
+model1 <- lm(hwy ~ cyl + displ, data = mpg)
+model2 <- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 <- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}`r ''`
+msummary(list("A" = model1, "B" = model2, "C" = model3)) %>% knit_latex()
+```
+````
+
+```{r, echo=FALSE, out.width="75%"}
+include_graphics("/img/regtables/msummary_pdf.png", error = FALSE)
+```
+
+### **modelsummary** HTML
+
+````
+---
+title: "`msummary()` example"
+output:
+  html_document: default
+---
+
+```{r warning=FALSE, message=FALSE}`r ''`
+library(tidyverse)
+library(modelsummary)
+
+model1 <- lm(hwy ~ cyl + displ, data = mpg)
+model2 <- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 <- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}`r ''`
+msummary(list("A" = model1, "B" = model2, "C" = model3))
+```
+````
+
+```{r, echo=FALSE, out.width="75%"}
+include_graphics("/img/regtables/msummary_html.png", error = FALSE)
+```
+
+### **modelsummary** RTF
+
+````
+---
+title: "`msummary()` example"
+output:
+  rtf_document: default
+---
+
+```{r warning=FALSE, message=FALSE}`r ''`
+library(tidyverse)
+library(modelsummary)
+
+model1 <- lm(hwy ~ cyl + displ, data = mpg)
+model2 <- lm(hwy ~ cyl + displ + year, data = mpg)
+model3 <- lm(hwy ~ cyl + displ + year + drv, data = mpg)
+```
+
+```{r}`r ''`
+msummary(list("A" = model1, "B" = model2, "C" = model3))
+```
+````
+
+```{r, echo=FALSE, out.width="75%"}
+include_graphics("/img/regtables/msummary_rtf.png", error = FALSE)
+```
