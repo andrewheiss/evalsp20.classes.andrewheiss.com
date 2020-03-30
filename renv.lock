@@ -1,6 +1,6 @@
 {
   "R": {
-    "Version": "3.6.1",
+    "Version": "3.6.3",
     "Repositories": [
       {
         "Name": "CRAN",
@@ -162,6 +162,20 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "f61dbaec772ccd2e17705c1e872e9e7c"
+    },
+    "checkmate": {
+      "Package": "checkmate",
+      "Version": "2.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "a667800d5f0350371bedeb8b8b950289"
+    },
+    "chron": {
+      "Package": "chron",
+      "Version": "2.3-55",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "d992665435a244ec1a44b842eb6e3491"
     },
     "cli": {
       "Package": "cli",
@@ -443,6 +457,13 @@
       "Repository": "CRAN",
       "Hash": "6d927978fc658d24175ce37db635f9e5"
     },
+    "latex2exp": {
+      "Package": "latex2exp",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "dad1cdbbe7546e372dd822c4aba9ac75"
+    },
     "lattice": {
       "Package": "lattice",
       "Version": "0.20-40",
@@ -450,19 +471,19 @@
       "Repository": "CRAN",
       "Hash": "61339152c288b871facca5f68f401f89"
     },
-    "lazyeval": {
-      "Package": "lazyeval",
-      "Version": "0.2.2",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Hash": "d908914ae53b04d4c0c0fd72ecc35370"
-    },
     "lifecycle": {
       "Package": "lifecycle",
       "Version": "0.2.0",
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "361811f31f71f8a617a9a68bf63f1f42"
+    },
+    "lpdensity": {
+      "Package": "lpdensity",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "1a6858c98b7ab6b7c0295cd15d8f8843"
     },
     "lubridate": {
       "Package": "lubridate",
@@ -512,6 +533,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "30a2db10e829133fa0a1e6eaed25bc73"
+    },
+    "modelsummary": {
+      "Package": "modelsummary",
+      "Version": "0.1.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "312dd048a14c65b926ec7ac412b69ae3"
     },
     "munsell": {
       "Package": "munsell",
@@ -645,6 +673,20 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "22aca7d1181718e927d403a8c2d69d62"
+    },
+    "rddensity": {
+      "Package": "rddensity",
+      "Version": "1.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "38fba0ed12c6e88615f627f2f1e117dd"
+    },
+    "rdrobust": {
+      "Package": "rdrobust",
+      "Version": "0.99.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "20ef6bec3ba77b977e6ab76ed28dbbc7"
     },
     "readr": {
       "Package": "readr",
@@ -848,6 +890,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "ce4f6271baa94776db692f1cb2055bee"
+    },
+    "wakefield": {
+      "Package": "wakefield",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "5b5f6993071568765df891935802a12c"
     },
     "whisker": {
       "Package": "whisker",
