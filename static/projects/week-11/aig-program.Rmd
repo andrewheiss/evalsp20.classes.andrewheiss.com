@@ -1,0 +1,116 @@
+---
+title: "The effect of a gifted program on student test scores"
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+---
+
+---
+
+In this hypothetical example, students take a test in 6th grade to determine if they can participate in an academically and intellectually gifted (AIG) program during middle school and high school. In the AIG program students regularly get pulled out of their classes for extra work and lessons. At the end of high school, students take a final test (with a maximum of 100 points) to measure how much they learned overall.
+
+```{r settings, include=FALSE}
+# Huxtable likes to automatically format *all* tables, which is annoying. 
+# This turns that off.
+options('huxtable.knit_print_df' = FALSE)
+
+# Make all figures use specific dimensions by default
+knitr::opts_chunk$set(fig.align = "center", retina = 2,
+                      fig.width = 6.5, fig.height = 4)
+```
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)  # For ggplot, %>%, and gang
+library(broom)      # For converting models into tables
+library(rdrobust)   # For robust nonparametric regression discontinuity
+library(rddensity)  # For nonparametric regression discontinuity density tests
+library(huxtable)   # For side-by-side regression tables
+
+# Load data
+aig_program <- read_csv("data/aig_program.csv")
+```
+
+
+## Step 1: Determine if process of assigning treatment is rule-based
+
+
+
+
+## Step 2: Determine if the design is fuzzy or sharp
+
+```{r check-fuzzy-sharp}
+
+```
+
+```{r fuzzy-sharp-table}
+
+```
+
+
+## Step 3: Check for discontinuity in running variable around cutpoint
+
+```{r check-running-discontinuity}
+
+```
+
+```{r check-running-discontinuity-mcrary}
+
+```
+
+
+## Step 4: Check for discontinuity in outcome across running variable
+
+```{r check-outcome-discontinuity}
+
+```
+
+
+## Step 5: Measure the size of the effect
+
+### Parametric estimation
+
+```{r center-simple-model}
+
+```
+
+```{r different-bandwidth-models}
+
+```
+
+```{r all-models}
+
+```
+
+
+### Nonparametric estimation
+
+```{r rdrobust-normal}
+
+```
+
+```{r rdplot-basic}
+
+```
+
+```{r rdbwselect}
+
+```
+
+```{r rdbwselect-all}
+
+```
+
+```{r rdrobust-different-bandwidths}
+
+```
+
+```{r rdrobust-different-kernels}
+
+```
+
+
+## Step 6: Compare all the effects
+

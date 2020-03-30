@@ -1,10 +1,10 @@
 ---
-title: "Instrumental variables I"
-linktitle: "11: IV I"
+title: "Regression discontinuity I & II"
+linktitle: "11: RDD I & II"
 date: "2020-04-01"
 class_date: "2020-04-01"
 bibliography: ../../static/bib/references.bib
-csl: ../../static/bib/chicago-fullnote-bibliography-no-bib.csl
+csl: ../../static/bib/chicago-syllabus-no-bib.csl
 output:
   blogdown::html_page:
     toc: true
@@ -14,10 +14,10 @@ menu:
     weight: 11
 type: docs
 weight: 11
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
+pdf: /slides/PMAP-8521_2020-04-01.pdf
+thumb: /slides/PMAP-8521_2020-04-01.png
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ## Slides
@@ -25,6 +25,1287 @@ editor_options:
 `r blogdown::shortcode("slides")`
 
 
+## R stuff
+
+Download all the R stuff you need to play along at home: [<i class="fas fa-file-archive"></i> `week-11.zip`](/projects/week-11.zip). You can also [open an RStudio.cloud project](https://rstudio.cloud/spaces/44864/project/1086609) with everything ready to go.
+
+
+## Get data for example
+
+Download this CSV file and put it in a folder named `data` in a new RStudio project:
+
+- [<i class="fas fa-table"></i> `aig_program.csv`](/data/aig_program.csv)
+
+
+## The effect of a gifted program on student test scores
+
+In this hypothetical example, students take a test in 6th grade to determine if they can participate in an academically and intellectually gifted (AIG) program during middle school and high school. In the AIG program students regularly get pulled out of their classes for extra work and lessons. At the end of high school, students take a final test (with a maximum of 100 points) to measure how much they learned overall. Remember, this is a hypothetical example and tests like this don't really exist, but just go with it.
+
+```{r settings, include=FALSE}
+# Make all figures use specific dimensions by default
+knitr::opts_chunk$set(fig.align = "center", retina = 2,
+                      fig.width = 7, fig.height = 4.2)
+```
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)  # For ggplot, %>%, and gang
+library(broom)      # For converting models into tables
+library(rdrobust)   # For robust nonparametric regression discontinuity
+library(rddensity)  # For nonparametric regression discontinuity density tests
+library(wakefield)  # Generate fake data
+library(huxtable)   # For side-by-side regression tables
+
+# Fake program data
+set.seed(1234)
+aig_program <- r_data_frame(
+  n = 1000,
+  id,
+  test_score = rbeta(shape1 = 7, shape2 = 2),
+  final_score = rbeta(shape1 = 5, shape2 = 3),
+  race,
+  sex
+) %>% 
+  mutate(test_score = test_score * 100,
+         aig = test_score >= 75) %>% 
+  mutate(final_score = final_score * 40 + 10 * aig + test_score / 2)
+```
+
+```{r include=FALSE, warning=FALSE}
+write_csv(aig_program, here::here("static", "data", "aig_program.csv"))
+```
+
+
+### Step 1: Determine if process of assigning treatment is rule-based
+
+In order to join the AIG program, students have to score 75 points or more on the AIG test in 6th grade. Students who score less than 75 are not eligible for the program. Since we have a clear 75-point rule, we can assume that the process of participating in the AIG program is rule-based.
+
+
+### Step 2: Determine if the design is fuzzy or sharp
+
+Since we know that the program was applied based on a rule, we want to next figure out how strictly the rule was applied. The threshold was 75 points on the test—did people who scored 73 slip into the AIG program, or did people who scored 80 not show up to the program? The easiest way to do this is with a graph, and we can get exact numbers with a table.
+
+```{r check-fuzzy-sharp}
+ggplot(aig_program, aes(x = test_score, y = aig, color = aig)) +
+  # Make points small and semi-transparent since there are lots of them
+  geom_point(size = 0.5, alpha = 0.5, 
+             position = position_jitter(width = 0, height = 0.25, seed = 1234)) + 
+  # Add vertical line
+  geom_vline(xintercept = 75) + 
+  # Add labels
+  labs(x = "AIG test score", y = "Participated in AIG program") + 
+  # Turn off the color legend, since it's redundant
+  guides(color = FALSE)
+```
+
+This looks pretty sharp—it doesn't look like people who scored under 75 participated in the program. We can verify this with a table. There are no people where `test_score` is greater than 75 and `aig` is false, and no people where `test_score` is less than 75 and `aig` is true.
+
+```{r fuzzy-sharp-table}
+aig_program %>% 
+  group_by(aig, test_score >= 75) %>% 
+  summarize(count = n())
+```
+
+This is thus a sharp design.
+
+
+### Step 3: Check for discontinuity in running variable around cutpoint
+
+Next we need to see if there was any manipulation in the rating or running variable—maybe lots of people bunched up around 75 because of how the test was graded (i.e. teachers wanted to get students into the program so they bumped people up from 70 to 76). We can do this a couple different ways. First, make a histogram of the running variable (test scores) and see if there are any big jumps around the threshold:
+
+```{r check-running-discontinuity}
+ggplot(aig_program, aes(x = test_score, fill = aig)) +
+  geom_histogram(binwidth = 2, color = "white") + 
+  geom_vline(xintercept = 75) + 
+  labs(x = "AIG test score", y = "Count", fill = "In program")
+```
+
+Here it looks like there might be a jump around the cutoff—there's a visible difference between the height of the bars right before and right after the 75-point threshold. But is that difference statistically significant? To test that, we can do a McCrary density test (explained on pp. 185-86 of [*Causal Inference: The Mixtape*](https://www.scunning.com/mixtape.html)). This puts data into bins like a histogram, and then plots the averages and confidence intervals of those bins. If the confidence intervals of the density lines don't overlap, then there's likely something systematically wrong with how the test was scored (i.e. too many people getting 76 vs 74). If the confidence intervals overlap, there's not any significant difference around the threshold and we're fine.
+
+```{r check-running-discontinuity-mcrary}
+# The syntax for rdplotdensity is kinda wonky here. You have to specify rdd,
+# which calculates the binned density of your running variable (and you have to
+# give it the cutpoint as c = whatever), and then you have to specify x, which
+# is the variable that goes on the x axis. In this case (and all cases?) it's
+# the same variable, but this function makes you specify it twice for whatever
+# reason. The type argument tells the plot to show both points and
+# lines---without it, it'll only show lines
+#
+# Also, notice this aig_program$test_score syntax. This is one way for R to
+# access columns in data frames---it means "use the test_score column in the
+# aig_program data frame". The general syntax for it is data_frame$column_name
+#
+# Finally, notice how I assigned the output of rdplotdensity to a variable named
+# test_density. In theory, this should make it show nothing---all the output
+# should go to that object. Because of a bug in rdplotdensity, though, it will
+# show a plot automatically even if assigning it to a variable. If we don't
+# assign it to a variable you'll see two identical plots when knitting, which is
+# annoying. So we save it as a variable to hide the ouput, but get the output
+# for a single plot anyway. Ugh.
+test_density <- rdplotdensity(rdd = rddensity(aig_program$test_score, c = 75), 
+                              X = aig_program$test_score, 
+                              type = "both")  # This adds both points and lines
+```
+
+Based on this plot, there's no significant difference in the distribution of test scores around the cutpoint. We're good. 
+
+
+### Step 4: Check for discontinuity in outcome across running variable
+
+Now that we know this is a sharp design and that there's no bunching of test scores around the 75-point threshold, we can finally see if there's a discontinuity in final scores based on participation in the AIG program. Plot the running variable on the x-axis, the outcome variable on the y-axis, and color the points by whether they participated in the program.
+
+```{r check-outcome-discontinuity, message=FALSE}
+ggplot(aig_program, aes(x = test_score, y = final_score, color = aig)) +
+  geom_point(size = 0.5, alpha = 0.5) + 
+  # Add a line based on a linear model for the people scoring less than 75
+  geom_smooth(data = filter(aig_program, test_score < 75), method = "lm") +
+  # Add a line based on a linear model for the people scoring 75 or more
+  geom_smooth(data = filter(aig_program, test_score >= 75), method = "lm") +
+  geom_vline(xintercept = 75) +
+  labs(x = "AIG test score", y = "Final score", color = "In program")
+```
+
+Based on this graph, there's a clear discontinuity! It looks like participation in the AIG program boosted final test scores.
+
+
+### Step 5: Measure the size of the effect
+
+There's a discontinuity, but how big is it? And is it statistically significant?
+
+We can check the size two different ways: parametrically (i.e. using `lm()` with specific parameters and coefficients), and nonparametrically (i.e. not using `lm()` or any kind of straight line and instead drawing lines that fit the data more precisely). We'll do it both ways.
+
+#### Parametric estimation
+
+First we'll do it parametrically by using linear regression. Here we want to explain the variation in final scores based on the AIG test score and participation in the program:
+
+$$
+\text{Final score} = \beta_0 + \beta_1 \text{AIG test score} + \beta_2 \text{AIG program} + \epsilon
+$$
+
+To make it easier to interpret coefficients, we can center the test score column so that instead of showing the actual test score, it shows how many points above or below 75 the student scored.
+
+```{r simple-model}
+aig_program_centered <- aig_program %>% 
+  mutate(test_score_centered = test_score - 75)
+
+model_simple <- lm(final_score ~ test_score_centered + aig, 
+                   data = aig_program_centered)
+tidy(model_simple)
+```
+
+Here's what these coefficients mean:
+
+- $\beta_0$: This is the intercept. Because we centered test scores, it shows the average final score at the 75-point threshold. People who scored 74.99 points on the AIG test score an average of 63 points on the final test. 
+- $\beta_1$: This is the coefficient for `test_score_centered`. For every point above 75 that people score on the AIG test, they score 0.53 points higher on the final test.
+- $\beta_2$: This is the coefficient for AIG, and this is the one we care about the most. This is the shift in intercept when `aig` is true, or the difference between scores at the threshold. Being in the AIG program increases final scores by 8.47 points.
+
+One advantage to using a parametric approach is that you can include other covariates like demographics. You can also use polynomial regression and include terms like `test_score²` or `test_score³` or even `test_score⁴` to make the line fit the data as close as possible.
+
+Here we fit the model to the entire data, but in real life, we care most about the observations right around the threshold. Scores that are super high or super low shouldn't really influence our effect size, since we only care about the people who score just barely under and just barely over 75.
+
+We can fit the same model but restrict it to people within a smaller window, or bandwidth, like ±10 points, or ±5 points:
+
+```{r different-bandwidth-models}
+model_bw_10 <- lm(final_score ~ test_score_centered + aig, 
+                  data = filter(aig_program_centered, 
+                                test_score_centered >= -10 & test_score_centered <= 10))
+tidy(model_bw_10)
+
+model_bw_5 <- lm(final_score ~ test_score_centered + aig, 
+                 data = filter(aig_program_centered, 
+                               test_score_centered >= -5 & test_score_centered <= 5))
+tidy(model_bw_5)
+```
+
+We can compare all these models simultaneously with `huxreg()`:
+
+```{r all-models}
+# Notice how I used a named list to add column names for the models
+huxreg(list("Simple" = model_simple, 
+            "Bandwidth = 10" = model_bw_10, 
+            "Bandwidth = 5" = model_bw_5))
+```
+
+The effect of `aig` differs a lot across these different models, from 7.3 to 9.2. Which one is right? I don't know. Also notice how much the sample size (N) changes across the models. As you narrow the bandwidth, you look at fewer and fewer observations. 
+
+```{r different-lm-bandwidths, message=FALSE}
+ggplot(aig_program, aes(x = test_score, y = final_score, color = aig)) +
+  geom_point(size = 0.5, alpha = 0.2) + 
+  # Add lines for the full model (model_simple)
+  geom_smooth(data = filter(aig_program, test_score < 75), 
+              method = "lm", se = FALSE, linetype = "dotted") +
+  geom_smooth(data = filter(aig_program, test_score >= 75), 
+              method = "lm", se = FALSE, linetype = "dotted") +
+  # Add lines for bandwidth = 10
+  geom_smooth(data = filter(aig_program, test_score < 75, test_score >= 65), 
+              method = "lm", se = FALSE, linetype = "dashed") +
+  geom_smooth(data = filter(aig_program, test_score >= 75, test_score <= 85), 
+              method = "lm", se = FALSE, linetype = "dashed") +
+  # Add lines for bandwidth = 5
+  geom_smooth(data = filter(aig_program, test_score < 75, test_score >= 70), 
+              method = "lm", se = FALSE) +
+  geom_smooth(data = filter(aig_program, test_score >= 75, test_score <= 80), 
+              method = "lm", se = FALSE) +
+  geom_vline(xintercept = 75) +
+  # Zoom in
+  coord_cartesian(xlim = c(60, 90), ylim = c(55, 80)) +
+  labs(x = "AIG test score", y = "Final score", color = "In program")
+```
+
+#### Nonparametric estimation
+
+Instead of using linear regression to measure the size of the discontinuity, we can use nonparametric methods. Essentially this means that R will not try to fit a straight line to the data—instead it'll curve around the points and try to fit everything as smoothly as possible.
+
+The `rdrobust()` function makes it really easy to measure the gap at the cutoff with nonparametric estimation. Here's the simplest version:
+
+```{r rdrobust-normal}
+# Notice how we have to use the aig_program$final_score syntax here. Also make
+# sure you set the cutoff with c
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, c = 75) %>% 
+  summary()
+```
+
+There are a few important pieces of information to look at in this output:
+
+- The thing you care about the most is the actual effect size. This is the coefficient in the table at the bottom, indicated with the "Conventional" method. Here it's 8.011, which means the AIG program causes an 8-point increase in final test scores. The table at the bottom also includes standard errors, p-values, and confidence intervals for the coefficient, both normal estimates (conventional) and robust estimates (robust). According to both types of estimates, this 8 point bump is statistically significant (p < 0.001; the 95% confidence interval definitely doesn't ever include 0).
+- The model used a bandwidth of 6.584 (`BW est. (h)` in the output), which means it only looked at people with test scores of 75 ± 6.6. It decided on this bandwidth automatically, but you can change it to whatever you want.
+- The model used a triangular kernel. This is the most esoteric part of the model—the kernel decides how much weight to give to observations around the cutoff. Test scores like 74.99 or 75.01 are extremely close to 75, so they get the most weight. Scores like 73 or 77 are a little further away so they matter less. Scores like 69 or 81 matter even less, so they get even less weight. You can use different kernels too, and [Wikipedia has a nice graphic showing the shapes of these different kernels](https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use) and how they give different weights to observations at different distances.
+
+We can plot this nonparametric model with `rdplot()`. It unfortunately doesn't use the same plotting system as `ggplot()`, so you can't add layers like `labs()` or `geom_point()` or anything else, which is sad. Oh well.
+
+```{r rdplot-basic}
+rdplot(y = aig_program$final_score, x = aig_program$test_score, c = 75)
+```
+
+Look at that 8 point jump at 75! Neat!
+
+By default, `rdrobust()` chooses the bandwidth size automatically based on fancy algorithms that economists have developed. You can use `rdbwselect()` to see what that bandwidth is, and if you include the `all = TRUE` argument, you can see a bunch of different potential bandwidths based on a bunch of different algorithms:
+
+```{r rdbwselect}
+# This says to use the mserd version, which according to the help file for
+# rdbwselect means "the mean squared error-optimal bandwidth selector for RD
+# treatment effects". Sounds great.
+rdbwselect(y = aig_program$final_score, x = aig_program$test_score, c = 75) %>% 
+  summary()
+```
+
+What are the different possible bandwidths we could use?
+
+```{r rdbwselect-all}
+rdbwselect(y = aig_program$final_score, x = aig_program$test_score, c = 75, all = TRUE) %>% 
+  summary()
+```
+
+Phew. There are a lot here. The best one was `mserd`, or ±6.5. Some say ±6, others ±4.5ish, other are asymmetric and say -14 before and +5 after, or -9 before and +4 after. Try a bunch of different bandwidths as part of your sensitivity analysis and see if your effect size changes substantially as a result.
+
+Another common approach to sensitivity analysis is to use the ideal bandwidth, twice the ideal, and half the ideal (so in our case 6.5, 13, and 3.25) and see if the estimate changes substantially. Use the `h` argument to specify your own bandwidth
+
+```{r rdrobust-different-bandwidths}
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, c = 75, h = 6.5) %>% 
+  summary()
+
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, c = 75, h = 6.5 * 2) %>% 
+  summary()
+
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, c = 75, h = 6.5 / 2) %>% 
+  summary()
+```
+
+Here the coefficients change slightly:
+
+|  Bandwidth  | Effect size |
+| :---------: | :---------: |
+| 6.5 (ideal) |    7.986    |
+|  13 (twice) |    8.774    |
+| 3.25 (half) |    8.169    |
+
+You can also adjust the kernel. By default `rd_robust` uses a triangular kernel (more distant observations have less weight linearly), but you can switch it to Epanechnikov (more distant observations have less weight following a curve) or uniform (more distant observations have the same weight as closer observations; this is unweighted).
+
+```{r rdrobust-different-kernels}
+# Non-parametric RD with different kernels
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, 
+         c = 75, kernel = "triangular") %>% 
+  summary()  # Default
+
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, 
+         c = 75, kernel = "epanechnikov") %>% 
+  summary()
+
+rdrobust(y = aig_program$final_score, x = aig_program$test_score, 
+         c = 75, kernel = "uniform") %>% 
+  summary()
+```
+
+Again, the coefficients change slightly:
+
+|    Kernel    | Effect size |
+| :----------: | :---------: |
+|  Triangular  |    8.011    |
+| Epanechnikov |    7.866    |
+|   Uniform    |    7.733    |
+
+Which one is best? ¯\\\_(ツ)\_/¯. All that really matters is that the size and direction of the effect doesn't change. It's still positive and it's still in the 7-8 point range.
+
+### Step 6: Compare all the effects
+
+We just estimated a ton of effect sizes. In real life you'd generally just report one of these as your final effect, but you'd run the different parametric and nonparametric models to check how reliable and robust your findings are. Here's everything we just found:
+
+|     Method    | Bandwidth |        Kernel        | Estimate |
+|:-------------:|:---------:|:--------------------:|:--------:|
+|   Parametric  | Full data |      Unweighted      |   8.470  |
+|   Parametric  |     10    |      Unweighted      |   9.196  |
+|   Parametric  |     5     |      Unweighted      |   7.361  |
+| Nonparametric |   6.584   |      Triangular      |   8.011  |
+| Nonparametric |    6.5    |      Triangular      |   7.986  |
+| Nonparametric |     13    |      Triangular      |   8.774  |
+| Nonparametric |    3.25   |      Triangular      |   8.169  |
+| Nonparametric |   6.584   |     Epanechnikov     |   7.866  |
+| Nonparametric |   6.584   | Uniform (unweighted) |   7.733  |
+
+In real life, I'd likely report the simplest one (row 4: nonparametric, automatic bandwidth, triangular kernel), but knowing how much the effect varies across model specifications is helpful.
+
+
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r slide-stuff, eval=FALSE, include=FALSE}
+library(tidyverse)
+library(broom)
+library(ggdag)
+
+pp_full <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_title <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 6, units = "in", device = cairo_pdf)
+}
+
+pp_short <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 4.5, units = "in", device = cairo_pdf)
+}
+
+pp_square <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 7.5, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_square_legend <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 11, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_half <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = (40/3)/2, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+library(wakefield)  # Generate fake data
+
+# Fake program data
+set.seed(1234)
+aig_program <- r_data_frame(
+  n = 1000,
+  id,
+  test_score = rbeta(shape1 = 7, shape2 = 2),
+  final_score = rbeta(shape1 = 5, shape2 = 3),
+  race,
+  sex
+) %>% 
+  mutate(test_score = test_score * 100,
+         aig = test_score >= 75) %>% 
+  mutate(final_score = final_score * 40 + 10 * aig + test_score / 2) %>% 
+  mutate(aig_fuzzy = ifelse(test_score > 65 & test_score < 85,
+                            sample(c(TRUE, FALSE), n(), replace = TRUE),
+                            aig))
+
+status_colors <- c(exposure = "#0074D9", outcome = "#FF4136", latent = "grey50")
+
+node_details <- tribble(
+  ~name, ~label, ~x, ~y,
+  "treatment", "Program", 1, 1,
+  "outcome", "Outcome", 4, 1,
+  "cutoff", "Above cutoff", 2, 1.75,
+  "running", "Running variable", 3, 2
+)
+
+node_labels <- node_details$label
+names(node_labels) <- node_details$name
+
+rdd_dag <- dagify(outcome ~ treatment + running,
+                  treatment ~ cutoff,
+                  cutoff ~ running,
+                  exposure = c("treatment", "cutoff"),
+                  outcome = "outcome",
+                  coords = node_details,
+                  labels = node_labels) %>% 
+  tidy_dagitty() %>%
+  node_status()
+
+set.seed(1234)
+ggplot(rdd_dag, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 10,
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) + 
+  theme_dag(base_size = 20)
+pp_full("rdd_dag")
+
+
+ggplot(aig_program, aes(x = test_score, y = aig, fill = aig)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             position = position_jitter(width = 0, height = 0.1, seed = 1234)) + 
+  geom_vline(xintercept = 75) + 
+  labs(x = "AIG test score", y = "Participated in AIG program") + 
+  guides(fill = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig1")
+
+ggplot(aig_program, aes(x = test_score, y = aig, fill = aig)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             position = position_jitter(width = 0, height = 0.1, seed = 1234)) + 
+  geom_vline(xintercept = 75) + 
+  labs(x = "AIG test score", y = "Participated in AIG program") + 
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = "Test score ≥ 75") +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_aig_sharp")
+
+ggplot(aig_program, aes(x = test_score, y = aig_fuzzy, fill = aig)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             position = position_jitter(width = 0, height = 0.1, seed = 1234)) + 
+  geom_vline(xintercept = 75) + 
+  labs(x = "AIG test score", y = "Participated in AIG program") + 
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = "Test score ≥ 75") +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_aig_fuzzy")
+
+ggplot(aig_program, aes(x = test_score, y = aig, fill = aig)) +
+  annotate(geom = "rect", fill = "grey50", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 75 - 5,  xmax = 75 + 5) +
+  annotate(geom = "rect", fill = "grey50", alpha = 0.5, ymin = -Inf, ymax = Inf,
+           xmin = 75 - 2,  xmax = 75 + 2) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             position = position_jitter(width = 0, height = 0.1, seed = 1234)) + 
+  geom_vline(xintercept = 75) + 
+  labs(x = "AIG test score", y = "Participated in AIG program") + 
+  guides(fill = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig2")
+
+ggplot(aig_program, aes(x = test_score, y = aig, fill = aig)) +
+  annotate(geom = "rect", fill = "grey50", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 75 - 5,  xmax = 75 + 5) +
+  annotate(geom = "rect", fill = "grey50", alpha = 0.5, ymin = -Inf, ymax = Inf,
+           xmin = 75 - 2,  xmax = 75 + 2) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             position = position_jitter(width = 0, height = 0.1, seed = 1234)) + 
+  geom_vline(xintercept = 75) +
+  labs(x = "AIG test score", y = "Participated in AIG program") + 
+  guides(fill = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  coord_cartesian(xlim = c(75 - 6, 75 + 6)) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig3")
+
+ggplot(aig_program, aes(x = test_score, y = final_score, fill = aig, color = aig)) +
+  geom_point(size = 3, pch = 21, color = "white", alpha = 0.4) + 
+  geom_vline(xintercept = 75) +
+  labs(x = "AIG test score", y = "Final test score") + 
+  guides(fill = FALSE, color = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  scale_color_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig4")
+
+ggplot(aig_program, aes(x = test_score, y = final_score, fill = aig, color = aig)) +
+  geom_point(size = 3, pch = 21, color = "white", alpha = 0.4) + 
+  geom_smooth(data = filter(aig_program, test_score < 75), method = "lm") +
+  geom_smooth(data = filter(aig_program, test_score >= 75), method = "lm") +
+  geom_vline(xintercept = 75) +
+  labs(x = "AIG test score", y = "Final test score") + 
+  guides(fill = FALSE, color = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  scale_color_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig5")
+
+program_data <- aig_program %>% 
+  mutate(aig_score_centered = test_score - 75)
+
+model1 <- lm(final_score ~ aig_score_centered + aig, 
+             data = program_data)
+
+tidy(model1)
+
+ggplot(aig_program, aes(x = test_score, y = final_score, fill = aig, color = aig)) +
+  geom_point(size = 3, pch = 21, color = "white", alpha = 0.4) + 
+  geom_smooth(data = filter(aig_program, test_score < 75), method = "lm") +
+  geom_smooth(data = filter(aig_program, test_score >= 75), method = "lm") +
+  geom_vline(xintercept = 75) +
+  labs(x = "AIG test score", y = "Final test score") + 
+  guides(fill = FALSE, color = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  scale_color_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  coord_cartesian(xlim = c(75 - 6, 75 + 6)) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig6")
+
+ggplot(aig_program, aes(x = test_score, y = final_score, fill = aig, color = aig)) +
+  geom_point(size = 3, pch = 21, color = "white", alpha = 0.4) + 
+  geom_smooth(data = filter(aig_program, test_score < 75), method = "loess") +
+  geom_smooth(data = filter(aig_program, test_score >= 75), method = "loess") +
+  geom_vline(xintercept = 75) +
+  labs(x = "AIG test score", y = "Final test score") + 
+  guides(fill = FALSE, color = FALSE) +
+  scale_fill_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  scale_color_manual(values = c("#FF4136", "#0074D9"), name = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed")
+pp_full("rdd_aig_loess")
+
+rdrobust(y = aig_program$final_score, 
+         x = aig_program$test_score, 
+         c = 75) %>% 
+  summary()
+```
+
+```{r parameters-and-other-stuff, eval=FALSE, include=FALSE}
+library(scales)
+library(latex2exp)
+
+line_colors_df <- tribble(
+  ~name, ~color, ~formula,
+  "Linear", "#0074D9", "y = β_1 x",
+  "Squared", "#FF851B", "y = β_1 x + β_2 x^2",
+  "Cubed", "#FF4136", "y = β_1 x + β_2 x^2 + β_3 x^3",
+  "Trigonometric", "#2ECC40", "y = β_1 x + β_2 sin(x)",
+  "Loess", "#B10DC9", "Loess"
+)
+
+line_colors <- line_colors_df$color %>% 
+  set_names(line_colors_df$name)
+
+fun_linear <- function(x) 10 + 4 * x
+fun_squared <- function(x) 120 - 3 * x + 0.07 * x^2
+fun_cubic <- function(x) 300 - 25 * x + 0.65 * x^2 - 0.004 * x^3
+fun_trig <- function(x) 10 + 4 * x + 50 * sin(0.25 * x)
+fun_trig_effect <- function(x) ifelse(x >= 75, fun_trig(x) + 200, fun_trig(x))
+fun_loess <- function(x) 100 + 30 * sin(5 * x) + 0.2 * x^2 - 0.002 * x^3
+
+set.seed(1234)
+df_params <- tibble(id = 1:400) %>% 
+  mutate(x_uniform = runif(n(), min = 0, max = 100)) %>% 
+  mutate(y_linear = fun_linear(x_uniform) + rnorm(n(), 0, 50)) %>% 
+  mutate(y_squared = fun_squared(x_uniform) + rnorm(n(), 0, 50)) %>% 
+  mutate(y_cubed = fun_cubic(x_uniform) + rnorm(n(), 0, 50)) %>% 
+  mutate(y_trig = fun_trig(x_uniform) + rnorm(n(), 0, 50)) %>% 
+  mutate(y_loess = fun_loess(x_uniform) + rnorm(n(), 0, 50)) %>% 
+  mutate_at(vars(starts_with("y_")),
+            list(effect = ~ifelse(x_uniform >= 75, . + 200, .)))
+
+df_params_long <- df_params %>% 
+  pivot_longer(cols = starts_with("y_")) %>%
+  mutate(name = fct_inorder(name))
+
+ggplot(df_params_long, aes(x = x_uniform, y = value)) +
+  geom_point() + 
+  facet_wrap(vars(name), nrow = 2)
+
+ggplot(df_params, aes(x = x_uniform, y = y_linear)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params1")
+
+ggplot(df_params, aes(x = x_uniform, y = y_linear_effect)) +
+  geom_vline(xintercept = 75, size = 1, linetype = "21") +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params1_effect")
+
+ggplot(df_params, aes(x = x_uniform, y = y_squared)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params2")
+
+ggplot(df_params, aes(x = x_uniform, y = y_squared)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params2a")
+
+ggplot(df_params, aes(x = x_uniform, y = y_squared_effect)) +
+  geom_vline(xintercept = 75, size = 1, linetype = "21") +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params2_effect")
+
+ggplot(df_params, aes(x = x_uniform, y = y_cubed)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params3")
+
+ggplot(df_params, aes(x = x_uniform, y = y_cubed)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params3a")
+
+ggplot(df_params, aes(x = x_uniform, y = y_cubed_effect)) +
+  geom_vline(xintercept = 75, size = 1, linetype = "21") +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params3_effect")
+
+ggplot(df_params, aes(x = x_uniform, y = y_cubed_effect)) +
+  geom_vline(xintercept = 75, size = 1, linetype = "21") +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "loess",
+              se = FALSE, size = 3, aes(color = "Loess")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "loess",
+              se = FALSE, size = 3, aes(color = "Loess")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params3b")
+
+ggplot(df_params, aes(x = x_uniform, y = y_trig)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  stat_function(fun = fun_trig, size = 3, aes(color = "Trigonometric")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params4")
+
+ggplot(df_params, aes(x = x_uniform, y = y_trig)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  stat_function(fun = fun_trig, size = 3, aes(color = "Trigonometric")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params4a")
+
+ggplot(df_params, aes(x = x_uniform, y = y_trig_effect)) +
+  geom_vline(xintercept = 75, size = 1, linetype = "21") +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "lm", formula = y ~ poly(x, 3),
+              se = FALSE, size = 3, aes(color = "Cubed")) +
+  stat_function(xlim = c(0, 74), fun = fun_trig, size = 3, aes(color = "Trigonometric")) +
+  stat_function(xlim = c(75, 100), fun = fun_trig_effect, size = 3, aes(color = "Trigonometric")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params4_effect")
+
+ggplot(df_params, aes(x = x_uniform, y = y_loess)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "loess", formula = y ~ x, aes(color = "Loess"), 
+              se = FALSE, size = 3) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params5")
+
+ggplot(df_params, aes(x = x_uniform, y = y_loess)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(method = "loess", formula = y ~ x, aes(color = "Loess"), 
+              se = FALSE, size = 3) +
+  geom_smooth(method = "lm", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Linear")) +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2),
+              se = FALSE, size = 3, aes(color = "Squared")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params5a")
+
+ggplot(df_params, aes(x = x_uniform, y = y_loess_effect)) +
+  geom_point(size = 5, pch = 21, color = "white", fill = "black", alpha = 0.5) +
+  geom_smooth(data = filter(df_params, x_uniform < 75),
+              method = "loess", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Loess")) +
+  geom_smooth(data = filter(df_params, x_uniform >= 75),
+              method = "loess", formula = y ~ x,
+              se = FALSE, size = 3, aes(color = "Loess")) +
+  scale_color_manual(values = line_colors, breaks = names(line_colors), 
+                     labels = map(line_colors_df$formula, TeX), name = NULL) +
+  labs(x = NULL, y = NULL) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_params5_effect")
+```
+
+```{r animation-stuff, eval=FALSE, include=FALSE}
+library(gganimate)
+# Single loess window with 0.75 span
+
+data_at_each_x <- df_params %>%
+  select(x_uniform, y_loess) %>% 
+  # Expand the data so all the variables are repeated for every possible x
+  crossing(center = unique(df_params$x_uniform)) %>%
+  # Do all these calculations for each possible x
+  group_by(center) %>%
+  # Find the distance between each x and the current group's x
+  mutate(dist = abs(x_uniform - center)) %>% 
+  # Scale the distance by the maximum of the distance
+  mutate(scaled_distance_full_data = rank(dist) / n()) %>% 
+  # Only look at values that are within the span
+  filter(scaled_distance_full_data <= 0.25) %>% 
+  # Calculate the triple cubic weight
+  # See https://www.itl.nist.gov/div898/handbook/pmd/section1/pmd144.htm and
+  # https://www.itl.nist.gov/div898/handbook/pmd/section1/dep/dep144.htm
+  mutate(weight = (1 - (dist / max(dist)) ^ 3) ^ 3) %>% 
+  # Put each of these groups into a nested list column
+  nest() %>% 
+  # Run a weighted linear model on each nested data frame and find the predicted
+  # value from the model for that x
+  mutate(output = map(data, ~lm(y_loess ~ x_uniform, data = ., weight = weight))) %>% 
+  mutate(model = map2(output, center, ~augment(.x, newdata = tibble(x_uniform = .y))))
+
+# Unnest the full data
+full_data <- data_at_each_x %>% 
+  select(center, data) %>% 
+  unnest(data)
+
+# Unnest just the predicted unemployment values
+point_data <- data_at_each_x %>% 
+  select(center, model) %>% 
+  unnest(model)
+
+# Calculate a single loess fit for the regular data
+single_fit <- augment(loess(y_loess ~ x_uniform, 
+                            data = df_params, 
+                            degree = 1, span = 0.25))
+
+# Plot everything!
+plot_loess_window <- ggplot(full_data, aes(x = x_uniform, 
+                                           y = y_loess)) +
+  # Faded points from original data
+  geom_point(data = df_params, 
+             size = 5.5, alpha = 0.5, color = "black", fill = "white", pch = 21) +
+  # Points with transparency based on loess weight
+  geom_point(aes(alpha = weight), size = 5, color = "#FF851B") +
+  # Single loess fit
+  geom_line(aes(y = .fitted), data = single_fit, size = 1, color = "#B10DC9") +
+  # Linear model for each possible x value
+  geom_smooth(aes(group = center, weight = weight), color = "#001f3f", size = 1.5,
+              formula = y ~ x, method = "lm", se = FALSE) +
+  # Predicted point from linear model for each possible x value
+  geom_point(aes(y = .fitted, group = x_uniform),
+             data = point_data, color = "#FFDC00", size = 3) +
+  # Vertical line showing current x value
+  geom_vline(aes(xintercept = center), lty = "31", size = 0.5, color = "black") +
+  # Formatting stuff
+  labs(x = NULL, y = NULL) +
+  guides(alpha = FALSE) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom") +
+  # gganimate stuff
+  transition_manual(center)
+
+animated_loess_window_gif <- animate(plot_loess_window, 
+                                     width = 1280, height = 720, res = 150)
+anim_save(animated_loess_window_gif, 
+          filename = here::here("temp_figs", "loess_window.gif"))
+animated_loess_window_gif
+
+# Can't use anim_save() with videos?
+# https://github.com/thomasp85/gganimate/issues/340
+animated_loess_window_mp4 <- animate(plot_loess_window, 
+                                     width = 1280*2, height = 720*2, res = 150,
+                                     renderer = av_renderer(here::here("temp_figs", "loess_window.mp4")))
+```
+
+```{r kernels-bandwidths, eval=FALSE, include=FALSE}
+# Formulas from https://en.wikipedia.org/wiki/Kernel_(statistics)
+rec <- function(x) (abs(x) <= 1) * 0.5
+tri <- function(x) (abs(x) < 1) * (1 - abs(x))
+epan <- function(x) (abs(x) < 1) * 0.75 * (1 - x^2)
+
+ggplot(mapping = aes(x = seq(-1.25, 1.25, 0.1))) + 
+  geom_vline(xintercept = 0, size = 1, color = "grey40") +
+  stat_function(fun = rec, aes(color = "Uniform"), size = 3) + 
+  stat_function(fun = tri, aes(color = "Triangular"), size = 3) +
+  stat_function(fun = epan, aes(color = "Epanechnikov"), size = 3) +
+  scale_color_manual(values = c("Uniform" = "#FF851B", 
+                                "Triangular" = "#0074D9", 
+                                "Epanechnikov" = "#85144b"), 
+                     breaks = c("Uniform", "Triangular", "Epanechnikov")) + 
+  labs(x = "Distance from cutoff", y = "Weight", color = NULL) + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank())
+pp_full("rdd_kernels")
+
+
+bw_line_colors_df <- tribble(
+  ~name, ~color,
+  "Linear", "#0074D9",
+  "Linear (bw = 5)", colorspace::darken("#0074D9", 0.5),
+  "Linear (bw = 2.5)", colorspace::darken("#0074D9", 1), 
+  "Loess", "#B10DC9"
+)
+
+bw_line_colors <- bw_line_colors_df$color %>% 
+  set_names(bw_line_colors_df$name)
+
+set.seed(1234)
+df_bandwidths <- tibble(x = seq(0, 20, by = 0.01),
+                        y_squiggly = 500 + 0.4 * (x - 10)^3) %>%
+  mutate(y_squiggly = y_squiggly + rnorm(n(), 10, 80)) %>% 
+  mutate(y_shifted = ifelse(x >= 10, y_squiggly + 300, y_squiggly)) %>% 
+  mutate(bw5 = x < 10 + 5 & x > 10 - 5,
+         bw2_5 = x < 10 + 2.5 & x > 10 - 2.5)
+
+ggplot(df_bandwidths, aes(x = x, y = y_shifted)) + 
+  annotate(geom = "rect", fill = "grey70", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 10 - 5,  xmax = 10 + 5) +
+  geom_point(aes(fill = bw5), size = 3, pch = 21, alpha = 0.5, color = "white") + 
+  geom_vline(xintercept = 10) +
+  scale_fill_manual(values = c("grey40", "#FF851B"), guide = FALSE) +
+  labs(x = NULL, y = NULL, title = "Bandwidth = 5") + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(plot.title = element_text(face = "bold"))
+pp_half("rdd_bw_a")
+
+ggplot(df_bandwidths, aes(x = x, y = y_shifted)) + 
+  annotate(geom = "rect", fill = "grey70", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 10 - 2.5,  xmax = 10 + 2.5) +
+  geom_point(aes(fill = bw2_5), size = 3, pch = 21, alpha = 0.5, color = "white") + 
+  geom_vline(xintercept = 10) +
+  scale_fill_manual(values = c("grey40", "#FF851B"), guide = FALSE) +
+  labs(x = NULL, y = NULL, title = "Bandwidth = 2.5") + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(plot.title = element_text(face = "bold"))
+pp_half("rdd_bw_b")
+
+ggplot(df_bandwidths, aes(x = x, y = y_shifted)) + 
+  geom_point(size = 3, pch = 21, alpha = 0.25, color = "white", fill = "black") + 
+  geom_vline(xintercept = 10) +
+  geom_smooth(data = filter(df_bandwidths, x < 10), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_bandwidths, x >= 10), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear")) +
+  scale_color_manual(values = bw_line_colors, breaks = names(bw_line_colors)) +
+  labs(x = NULL, y = NULL, color = NULL) + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_bw1")
+
+ggplot(df_bandwidths, aes(x = x, y = y_shifted)) + 
+  annotate(geom = "rect", fill = "grey70", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 10 - 5,  xmax = 10 + 5) +
+  geom_point(size = 3, pch = 21, alpha = 0.25, color = "white", fill = "black") + 
+  geom_vline(xintercept = 10) +
+  geom_smooth(data = filter(df_bandwidths, x < 10), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_bandwidths, x >= 10), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_bandwidths, x < 10 & x > 5),
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear (bw = 5)")) +
+  geom_smooth(data = filter(df_bandwidths, x >= 10 & x < 15), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear (bw = 5)")) +
+  scale_color_manual(values = bw_line_colors, breaks = names(bw_line_colors)) +
+  labs(x = NULL, y = NULL, color = NULL) + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_bw2")
+
+ggplot(df_bandwidths, aes(x = x, y = y_shifted)) + 
+  annotate(geom = "rect", fill = "grey70", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 10 - 5,  xmax = 10 + 5) +
+  annotate(geom = "rect", fill = "grey70", alpha = 0.25, ymin = -Inf, ymax = Inf,
+           xmin = 10 - 2.5,  xmax = 10 + 2.5) +
+  geom_point(size = 3, pch = 21, alpha = 0.25, color = "white", fill = "black") + 
+  geom_vline(xintercept = 10) +
+  geom_smooth(data = filter(df_bandwidths, x < 10), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_bandwidths, x >= 10), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear")) +
+  geom_smooth(data = filter(df_bandwidths, x < 10 & x > 5),
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear (bw = 5)")) +
+  geom_smooth(data = filter(df_bandwidths, x >= 10 & x < 15), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear (bw = 5)")) +
+  geom_smooth(data = filter(df_bandwidths, x < 10 & x > 7.5),
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear (bw = 2.5)")) +
+  geom_smooth(data = filter(df_bandwidths, x >= 10 & x < 12.5), 
+              method = "lm", formula = y ~ x,
+              size = 3, se = FALSE, aes(color = "Linear (bw = 2.5)")) +
+  scale_color_manual(values = bw_line_colors, breaks = names(bw_line_colors)) +
+  labs(x = NULL, y = NULL, color = NULL) + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom")
+pp_full("rdd_bw3")
+
+set.seed(1234)
+df_kernels <- tibble(x = runif(100, -1, 1),
+                     y = runif(100, 0, 100)) %>% 
+  mutate(y = ifelse(x > 0, y + 50, y)) %>% 
+  mutate(wt_rec = rec(x),
+         wt_tri = tri(x),
+         wt_epan = epan(x))
+
+df_kernels_long <- df_kernels %>% 
+  pivot_longer(cols = starts_with("wt_"), values_to = "weight") %>% 
+  mutate(name = recode(name, wt_epan = "Epanechnikov", 
+                       wt_tri = "Triangular", 
+                       wt_rec = "Rectangular")) %>% 
+  mutate(name = fct_inorder(name))
+
+ggplot(df_kernels_long, aes(x = x, y = y)) + 
+  geom_point(aes(size = weight, fill = weight), pch = 21, color = "white", alpha = 0.8) +
+  geom_vline(xintercept = 0) +
+  scale_size_continuous(range = c(2, 10)) +
+  scale_fill_viridis_c(option = "viridis", name = "Weight   ", limits = c(0, 1)) +
+  guides(size = FALSE, fill = guide_colorbar(barwidth = 20)) +
+  facet_wrap(vars(name)) +
+  labs(x = NULL, y = NULL) + 
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+pp_full("rdd_kernel1")
+```
+
+```{r marathons, eval=FALSE, include=FALSE}
+library(tidyverse)
+library(scales)
+
+# Download from https://faculty.chicagobooth.edu/george.wu/research/marathon/data.htm
+marathons_raw <- read_csv("~/Downloads/master_marathon.csv")
+
+marathons <- marathons_raw %>% 
+  select(chiptime) %>% 
+  # Only those under 7 hours
+  filter(chiptime < (7 * 60)) %>% 
+  # Only use 10% of the data for tinkering with the plot
+  # sample_frac(0.1) %>% 
+  # Convert to seconds so that time_format() works correctly
+  mutate(chiptime = chiptime * 60)
+
+half_hours <- tibble(line = seq(2, 7, 0.5) * 60)
+
+ggplot(marathons, aes(x = chiptime)) +
+  geom_histogram(binwidth = 1 * 60, boundary = 0, fill = "#2ECC40") +
+  geom_vline(data = half_hours, aes(xintercept = line * 60), color = "white") +
+  scale_x_time(labels = time_format("%H:%M"),
+               breaks = half_hours$line * 60) +
+  scale_y_continuous(labels = comma, expand = c(0, 0)) +
+  labs(x = "Finish time (each bar is one minute)", y = "Number of finishers",
+       title = "Distribution of marathon finishing times",
+       subtitle = paste0("N = ", comma(nrow(marathons))),
+       caption = "Eric J. Allen, Patricia M. Dechow, Devin G. Pope, George Wu (2017)\nReference-Dependent Preferences: Evidence from Marathon Runners.\nManagement Science 63(6):1657-1672. https://doi.org/10.1287/mnsc.2015.2417") +
+  theme_classic(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(plot.title = element_text(face = "bold"),
+        plot.caption = element_text(size = rel(0.4)))
+pp_full("rdd_marathons")
+```
+
+```{r manipulation, eval=FALSE, include=FALSE}
+library(rddensity)
+library(patchwork)
+
+# Generate a random sample with a discontinuous density
+set.seed(42)
+x <- rnorm(2000, mean = -0.5); x[x > 0] <- x[x > 0] * 2
+x_good <- rnorm(2000, mean = -0.5)
+
+plot1 <- rdplotdensity(rddensity(X = x), x, plotRange = c(-2, 2), plotN = 25)
+plot2 <- rdplotdensity(rddensity(X = x_good), x_good, plotRange = c(-2, 2), plotN = 25)
+
+thing1 <- plot1$Estplot + 
+  geom_vline(xintercept = 0) +
+  labs(x = "Running variable", y = "Density",
+       title = "Manipulation") + 
+  guides(color = FALSE, linetype = FALSE) +
+  theme_bw(base_size = 24, base_family = "Fira Sans Condensed") +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid = element_blank())
+
+thing2 <- plot2$Estplot +
+  geom_vline(xintercept = 0) +
+  labs(x = "Running variable", y = "Density",
+       title = "No manipulation") + 
+  guides(color = FALSE, linetype = FALSE) +
+  theme_bw(base_size = 24, base_family = "Fira Sans Condensed") + 
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid = element_blank())
+
+thing1 + thing2
+pp_short("rdd_mcrary")
+```
+
+```{r too-graphical, eval=FALSE, include=FALSE}
+set.seed(1234)
+too_graphical <- tibble(id = 1:2000) %>% 
+  mutate(score = runif(n(), -100, 100)) %>% 
+  mutate(treatment_big = ifelse(score < 0, 0, 0.6)) %>% 
+  mutate(outcome_big = treatment_big + rnorm(n())) %>% 
+  mutate(treatment_medium = ifelse(score < 0, 0, 0.3)) %>% 
+  mutate(outcome_medium = treatment_medium + rnorm(n())) %>% 
+  mutate(treatment_small = ifelse(score < 0, 0, 0.155)) %>% 
+  mutate(outcome_small = treatment_small + rnorm(n())) %>% 
+  mutate(above = score >= 0) %>% 
+  mutate_at(vars(starts_with("outcome_")), list(~. * 100))
+
+model_big <- lm(outcome_big ~ above, data = too_graphical)
+model_medium <- lm(outcome_medium ~ above, data = too_graphical)
+model_small <- lm(outcome_small ~ above, data = too_graphical)
+
+extract_t_p <- function(x) {
+  tidied <- tidy(x) %>% 
+    filter(term == "aboveTRUE")
+
+  paste0("δ = ", round(tidied$estimate, 2), 
+         "; t = ", round(tidied$statistic, 3),
+         "; p = ", pvalue(tidied$p.value))
+}
+
+# rdrobust(y = too_graphical$outcome_small, 
+#          x = too_graphical$score, 
+#          c = 0, p = 1, all = TRUE, h = 2000) %>% 
+#   summary()
+
+rd_binned_big <- rdplot(y = too_graphical$outcome_big, x = too_graphical$score, 
+                        c = 0, p = 1, hide = TRUE)
+rd_binned_medium <- rdplot(y = too_graphical$outcome_medium, x = too_graphical$score, 
+                           c = 0, p = 1, hide = TRUE)
+rd_binned_small <- rdplot(y = too_graphical$outcome_small, x = too_graphical$score, 
+                          c = 0, p = 1, hide = TRUE)
+
+rd_binned_all <- tribble(
+  ~size, ~binned_data, ~poly_data, ~model,
+  "Big", rd_binned_big$vars_bins, rd_binned_big$vars_poly, model_big,
+  "Medium", rd_binned_medium$vars_bins, rd_binned_medium$vars_poly, model_medium,
+  "Small", rd_binned_small$vars_bins, rd_binned_small$vars_poly, model_small
+) %>% 
+  mutate(letter = LETTERS[1:n()]) %>% 
+  mutate(stats = map_chr(model, extract_t_p)) %>% 
+  mutate_at(vars(size, stats, letter), list(fct_inorder))
+
+plot_binned <- rd_binned_all %>% 
+  unnest(binned_data)
+
+plot_poly <- rd_binned_all %>% 
+  unnest(poly_data)
+
+ggplot(plot_binned, aes(x = rdplot_mean_bin, y = rdplot_mean_y)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             aes(fill = rdplot_mean_bin <= 0)) +
+  geom_vline(xintercept = 0, size = 1, linetype = "21") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), guide = FALSE) +
+  labs(x = NULL, y = NULL) +
+  facet_wrap(vars(letter), nrow = 1) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+pp_title("rdd_too_graphical1")
+
+ggplot(plot_binned, aes(x = rdplot_mean_bin, y = rdplot_mean_y)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             aes(fill = rdplot_mean_bin <= 0)) +
+  geom_line(data = filter(plot_poly, rdplot_x < 0), 
+            aes(x = rdplot_x, y = rdplot_y),
+            color = "black", size = 3) +
+  geom_line(data = filter(plot_poly, rdplot_x > 0), 
+            aes(x = rdplot_x, y = rdplot_y),
+            color = "black", size = 3) +
+  geom_vline(xintercept = 0, size = 1, linetype = "21") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), guide = FALSE) +
+  labs(x = NULL, y = NULL) +
+  facet_wrap(vars(letter), nrow = 1) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+pp_title("rdd_too_graphical2")
+
+ggplot(plot_binned, aes(x = rdplot_mean_bin, y = rdplot_mean_y)) +
+  geom_point(size = 5, pch = 21, color = "white", alpha = 0.7,
+             aes(fill = rdplot_mean_bin <= 0)) +
+  geom_line(data = filter(plot_poly, rdplot_x < 0), 
+            aes(x = rdplot_x, y = rdplot_y),
+            color = "black", size = 3) +
+  geom_line(data = filter(plot_poly, rdplot_x > 0), 
+            aes(x = rdplot_x, y = rdplot_y),
+            color = "black", size = 3) +
+  geom_vline(xintercept = 0, size = 1, linetype = "21") +
+  scale_fill_manual(values = c("#0074D9", "#FF4136"), guide = FALSE) +
+  labs(x = NULL, y = NULL) +
+  facet_wrap(vars(stats), nrow = 1) +
+  theme_bw(base_size = 28, base_family = "Fira Sans Condensed") +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        panel.grid.minor.y = element_blank())
+pp_title("rdd_too_graphical3")
+```
