@@ -25,6 +25,21 @@ editor_options:
 `r blogdown::shortcode("slides")`
 
 
+## Lecture videos
+
+Videos for each section of the lecture and the R demonstration are [available at this YouTube playlist](https://www.youtube.com/playlist?list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE).
+
+1. [Introduction](https://www.youtube.com/watch?v=-WzlMTDzFl4&list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE&index=2&t=0s)
+2. [Arbitrary cutoffs & causal inference](https://www.youtube.com/watch?v=WLDfTkK6Lkk&list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE&index=3&t=0s)
+3. [Drawing lines & measuring gaps](https://www.youtube.com/watch?v=YqVsb3f86dY&list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE&index=4&t=0s)
+4. [Main RDD concerns](https://www.youtube.com/watch?v=mnYxO1vCVqc&list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE&index=5&t=0s)
+5. [RDD with R](https://www.youtube.com/watch?v=8vHQCj5ploM&list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE&index=6&t=0s)
+
+You can also watch the playlist (and skip around to different sections) here:
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/videoseries?list=PLS6tnpTr39sH_SPq_VYDgvA01ZtCOUjgE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
 ## R stuff
 
 Download all the R stuff you need to play along at home: [<i class="fas fa-file-archive"></i> `week-11.zip`](/projects/week-11.zip). You can also [open an RStudio.cloud project](https://rstudio.cloud/spaces/44864/project/1086609) with everything ready to go.
