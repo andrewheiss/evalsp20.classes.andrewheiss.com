@@ -14,6 +14,7 @@ output:
 
 ```{r setup, include=FALSE}
 library(knitr)
+set.seed(1234)  # To stop gt from constantly regenerating IDs
 ```
 
 It's often helpful to put the results from regression models in a side-by-side table so you can compare coefficients across different model specifications. If you're unfamiliar with these kinds of tables, [check out this helpful guide to how to read them](http://svmiller.com/blog/2014/08/reading-a-regression-table-a-guide-for-students/).
