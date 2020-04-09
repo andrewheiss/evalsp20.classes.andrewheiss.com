@@ -21,13 +21,14 @@ editor_options:
 <div id="TOC">
 <ul>
 <li><a href="#resources">Resources</a></li>
-<li><a href="#suggested-outline">Suggested outline</a><ul>
+<li><a href="#suggested-outline">Suggested outline</a>
+<ul>
 <li><a href="#introduction">Introduction</a></li>
 <li><a href="#program-overview">Program overview</a></li>
 <li><a href="#program-theory-and-implementation">Program theory and implementation</a></li>
 <li><a href="#outcome-and-causation">Outcome and causation</a></li>
 <li><a href="#data-and-methods">Data and methods</a></li>
-<li><a href="#synthetic-analysis">Synthetic analysis</a></li>
+<li><a href="#synthetic-analysis"><del>Synthetic analysis</del></a></li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul></li>
 </ul>
@@ -39,18 +40,23 @@ editor_options:
 <p>One increasingly popular method for (1) ensuring that your data and methods work before launching a study or intervention, and (2) declaring and committing to your hypotheses and methods and models before analyzing your data is to <a href="https://blogs.plos.org/plos/2019/11/preregistration-can-bring-science-back-to-its-roots/"><em>pre-register</em> your research or evaluation</a>. A <a href="https://www.sciencemag.org/news/2018/09/more-and-more-scientists-are-preregistering-their-studies-should-you">pre-registered study</a> contains all the background work—an introduction, literature review, theory, hypotheses, and proposed analysis—but without the actual data. Authors post their expectations and hypotheses publicly so they can be held publicly accountable for any deviations from their proposed design.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>The best preregistered studies use simulated data that has the same structure as the data that will be collected (i.e. same columns, sometimes the same correlations and relationships researchers expect to see in the collected data, etc.). Because there’s no data yet (or just fake data), you have more freedom when developing a preregistered study. You can experiment with different models, play with different approaches, manipulate data in different ways, and so on. If you realize that you need a new variable, or that you need to rearrange questions on a survey, or make any other kinds of changes, you can—you haven’t collected the data yet!</p>
 <p>Once you finalize your plan and know all the data you need to collect, and once you’ve written out the different models you’ll run, all you have to do is collect the real data, plop it into your script (replacing the fake data you’d been using), and run the analysis script again to generate the actual, real results. In the results section, you get to either say “As predicted, we found…”, or “Contrary to expectations, we found that…”.</p>
-<p>For your final project in this class, you will write a pre-registered analysis of a public or nonprofit social program that you’re interested in. You don’t need to worry about collecting data—you’ll create a synthetic dataset for your pre-analysis.</p>
-<p>You will submit <strong>three things</strong> via iCollege:</p>
+<p>For your final project in this class, you will write a pre-registered analysis of a public or nonprofit social program that you’re interested in. <del>You don’t need to worry about collecting data—you’ll create a synthetic dataset for your pre-analysis.</del></p>
+<p>You will submit one thing via iCollege:</p>
 <ol style="list-style-type: decimal">
-<li>A PDF of your preregistered report (see the outline below for details of what this needs to contain). You should compile this with R Markdown. You might want to write the prose-heavy sections in a word processor like Word or Google Docs and copy/paste the text into your R Markdown document, since RStudio doesn’t have a nice spell checker or grammar checker. This should have <em>no visible R code, warnings, or messages in it</em> (set <code>echo=FALSE</code> at the beginning of your document before you knit).</li>
-<li>The same PDF as above, but with all the R code in it (set <code>echo=TRUE</code> at the beginning of your document and reknit the file).</li>
-<li>A CSV file of your fake data.</li>
+<li>A PDF of your preregistered report (<strong>see the outline below for details of what this needs to contain</strong>). You can compile this with R Markdown, or you can do it in a word processor like Word or Google Docs. If you use R Markdown, you might want to write the prose-heavy sections in a word processor and copy/paste the text into your R Markdown document, since RStudio doesn’t have a nice spell checker or grammar checker.</li>
 </ol>
-<p>This project is due by <strong>7:00 PM on Wednesday, April 29, 2020.</strong> <span style="color: #EE6A24; font-weight: bold"> No late work will be accepted.</span></p>
-<p>You can either run the analysis in RStudio locally on your computer (highly recommended(!!), since you won’t have to worry about keeping all your work on RStudio’s servers), or use an RStudio.cloud project. You can make a copy of this RStudio.cloud project—it doesn’t have anything in it, but I have preinstalled all the packages we’ve used over the course of the semester, so you don’t have to.</p>
+<p>This project is due by <strong>7:00 PM on Wednesday, April 29, 2020.</strong> <span style="color: #81056F; font-weight: bold"> No late work will be accepted.</span></p>
+<p><del>You will submit <strong>three things</strong> via iCollege:</del></p>
+<ol style="list-style-type: decimal">
+<li><del>A PDF of your preregistered report (see the outline below for details of what this needs to contain). You should compile this with R Markdown. You might want to write the prose-heavy sections in a word processor like Word or Google Docs and copy/paste the text into your R Markdown document, since RStudio doesn’t have a nice spell checker or grammar checker. This should have <em>no visible R code, warnings, or messages in it</em> (set <code>echo=FALSE</code> at the beginning of your document before you knit).</del></li>
+<li><del>The same PDF as above, but with all the R code in it (set <code>echo=TRUE</code> at the beginning of your document and reknit the file).</del></li>
+<li><del>A CSV file of your fake data.</del></li>
+</ol>
+<p><del>This project is due by <strong>7:00 PM on Wednesday, April 29, 2020.</strong> <span style="color: #81056F; font-weight: bold"> No late work will be accepted.</span></del></p>
+<p><del>You can either run the analysis in RStudio locally on your computer (highly recommended(!!), since you won’t have to worry about keeping all your work on RStudio’s servers), or use an RStudio.cloud project. You can make a copy of this RStudio.cloud project—it doesn’t have anything in it, but I have preinstalled all the packages we’ve used over the course of the semester, so you don’t have to.</del></p>
 <ul>
-<li><a href="https://rstudio.cloud/spaces/26160/project/714408"><i class="fas fa-external-link-square-alt"></i> Empty RStudio.cloud project</a></li>
-<li><a href="/files/final-project.zip"><i class="fas fa-file-archive"></i> Empty RStudio project you can download and unzip on your computer</a> (doesn’t include any packages, since you’re responsible for installing those)</li>
+<li><del><a href="https://rstudio.cloud/spaces/44864/project/1128916"><i class="fas fa-external-link-square-alt"></i> Empty RStudio.cloud project</a></del></li>
+<li><del><a href="/files/final-project.zip"><i class="fas fa-file-archive"></i> Empty RStudio project you can download and unzip on your computer</a> (doesn’t include any packages, since you’re responsible for installing those)</del></li>
 </ul>
 <div id="resources" class="section level2">
 <h2>Resources</h2>
@@ -63,9 +69,9 @@ editor_options:
 </div>
 <div id="suggested-outline" class="section level2">
 <h2>Suggested outline</h2>
-<p>Here’s an outline of what you’ll need to do.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> You can download this as an RMarkdown file and change the text if you want. I’ve also included this as an RMarkdown file in the empty RStudio.cloud project.</p>
+<p>Here’s an outline of what you’ll need to do. You did lots of this work in your evaluation assignments. Please don’t just copy/paste those assignments as is into this final project—you’ll want to policy it up for this final report. You can download this as an RMarkdown file and change the text if you want. I’ve also included this as an RMarkdown file in the empty RStudio.cloud project.</p>
 <ul>
-<li><a href="/files/final-project/final-project-template.Rmd"><i class="fab fa-r-project"></i> <code>final-project-template.Rmd</code></a></li>
+<li><a href="/projects/final-project/final-project-template.Rmd"><i class="fab fa-r-project"></i> <code>final-project-template.Rmd</code></a></li>
 </ul>
 <hr />
 <div id="introduction" class="section level3">
@@ -130,17 +136,18 @@ editor_options:
 </div>
 </div>
 <div id="synthetic-analysis" class="section level3">
-<h3>Synthetic analysis</h3>
-<p>Generate a synthetic (fake) dataset in R with all the variables you’ll need for the real life analysis. Analyze the data using your identification strategy. For instance:</p>
+<h3><del>Synthetic analysis</del></h3>
+<p><strong>Due to the COVID-19 pandemic, you do not have to do this section.</strong></p>
+<p><del>Generate a synthetic (fake) dataset in R with all the variables you’ll need for the real life analysis. Analyze the data using your identification strategy. For instance:</del></p>
 <ul>
-<li>If you’re relying on observational data, close all the backdoors, don’t adjust for colliders, and make a strong argument for isolation of the causal effect in the absence of treatment/control groups</li>
-<li>If you’re doing an RCT, test the differences in means in the treatment and control groups (and follow all other best practices listed in the World Bank book, checking for balance across groups, etc.)</li>
-<li>If you’re doing diff-in-diff, run a regression model with an interaction term to show the diff-in-diff</li>
-<li>If you’re doing regression discontinuity, check for a jump in the outcome variable at the cutoff in the running variable</li>
-<li>If you’re using instrumental variables, check the validity of your instrument and run a 2SLS model</li>
+<li><del>If you’re relying on observational data, close all the backdoors with matching or inverse probability weighting, don’t adjust for colliders, and make a strong argument for isolation of the causal effect in the absence of treatment/control groups</del></li>
+<li><del>If you’re doing an RCT, test the differences in means in the treatment and control groups (and follow all other best practices listed in the World Bank book, checking for balance across groups, etc.)</del></li>
+<li><del>If you’re doing diff-in-diff, run a regression model with an interaction term to show the diff-in-diff</del></li>
+<li><del>If you’re doing regression discontinuity, check for a jump in the outcome variable at the cutoff in the running variable</del></li>
+<li><del>If you’re using instrumental variables, check the validity of your instrument and run a 2SLS model</del></li>
 </ul>
-<p>Include robustness checks to ensure the validity of your effect (i.e. if you’re doing regression discontinuity, test different bandwidths and kernel types; etc.)</p>
-<p>(<strong>As many words as you need to fully describe your analysis and results</strong>)</p>
+<p><del>Include robustness checks to ensure the validity of your effect (i.e. if you’re doing regression discontinuity, test different bandwidths and kernel types; etc.)</del></p>
+<p><del>(<strong>As many words as you need to fully describe your analysis and results</strong>)</del></p>
 </div>
 <div id="conclusion" class="section level3">
 <h3>Conclusion</h3>
@@ -151,6 +158,5 @@ editor_options:
 <hr />
 <ol>
 <li id="fn1"><p>See the <a href="https://cos.io/prereg/">Center for Open Science’s directory of preregistrations</a>, or <a href="https://aspredicted.org/">AsPredicted list</a> for examples of this in real life. <a href="https://osf.io/hsbyd">Here’s one by me!</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
-<li id="fn2"><p>If you did problem sets 4 and 5, you’ve already done a lot of this work! I don’t recommend simply copying/pasting it as is into here—you’ll want to polish it up a little for this final report.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>

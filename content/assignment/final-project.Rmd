@@ -28,20 +28,27 @@ The best preregistered studies use simulated data that has the same structure as
 
 Once you finalize your plan and know all the data you need to collect, and once you've written out the different models you'll run, all you have to do is collect the real data, plop it into your script (replacing the fake data you'd been using), and run the analysis script again to generate the actual, real results. In the results section, you get to either say "As predicted, we found…", or "Contrary to expectations, we found that…".
 
-For your final project in this class, you will write a pre-registered analysis of a public or nonprofit social program that you're interested in. You don't need to worry about collecting data—you'll create a synthetic dataset for your pre-analysis.
+For your final project in this class, you will write a pre-registered analysis of a public or nonprofit social program that you're interested in. ~~You don't need to worry about collecting data—you'll create a synthetic dataset for your pre-analysis.~~
 
-You will submit **three things** via iCollege:
+You will submit one thing via iCollege:
 
-1. A PDF of your preregistered report (see the outline below for details of what this needs to contain). You should compile this with R Markdown. You might want to write the prose-heavy sections in a word processor like Word or Google Docs and copy/paste the text into your R Markdown document, since RStudio doesn't have a nice spell checker or grammar checker. This should have *no visible R code, warnings, or messages in it* (set `echo=FALSE` at the beginning of your document before you knit).
-2. The same PDF as above, but with all the R code in it (set `echo=TRUE` at the beginning of your document and reknit the file).
-2. A CSV file of your fake data.
+1. A PDF of your preregistered report (**see the outline below for details of what this needs to contain**). You can compile this with R Markdown, or you can do it in a word processor like Word or Google Docs. If you use R Markdown, you might want to write the prose-heavy sections in a word processor and copy/paste the text into your R Markdown document, since RStudio doesn't have a nice spell checker or grammar checker.
 
-This project is due by **7:00 PM on Wednesday, April 29, 2020.** <span style="color: #EE6A24; font-weight: bold"> No late work will be accepted.</span>
+This project is due by **7:00 PM on Wednesday, April 29, 2020.** <span style="color: #81056F; font-weight: bold"> No late work will be accepted.</span>
 
-You can either run the analysis in RStudio locally on your computer (highly recommended(!!), since you won't have to worry about keeping all your work on RStudio's servers), or use an RStudio.cloud project. You can make a copy of this RStudio.cloud project—it doesn't have anything in it, but I have preinstalled all the packages we've used over the course of the semester, so you don't have to.
 
-- [<i class="fas fa-external-link-square-alt"></i> Empty RStudio.cloud project](https://rstudio.cloud/spaces/26160/project/714408)
-- [<i class="fas fa-file-archive"></i> Empty RStudio project you can download and unzip on your computer](/files/final-project.zip) (doesn't include any packages, since you're responsible for installing those)
+~~You will submit **three things** via iCollege:~~
+
+1. ~~A PDF of your preregistered report (see the outline below for details of what this needs to contain). You should compile this with R Markdown. You might want to write the prose-heavy sections in a word processor like Word or Google Docs and copy/paste the text into your R Markdown document, since RStudio doesn't have a nice spell checker or grammar checker. This should have *no visible R code, warnings, or messages in it* (set `echo=FALSE` at the beginning of your document before you knit).~~
+2. ~~The same PDF as above, but with all the R code in it (set `echo=TRUE` at the beginning of your document and reknit the file).~~
+3. ~~A CSV file of your fake data.~~
+
+~~This project is due by **7:00 PM on Wednesday, April 29, 2020.** <span style="color: #81056F; font-weight: bold"> No late work will be accepted.</span>~~
+
+~~You can either run the analysis in RStudio locally on your computer (highly recommended(!!), since you won't have to worry about keeping all your work on RStudio's servers), or use an RStudio.cloud project. You can make a copy of this RStudio.cloud project—it doesn't have anything in it, but I have preinstalled all the packages we've used over the course of the semester, so you don't have to.~~
+
+- ~~[<i class="fas fa-external-link-square-alt"></i> Empty RStudio.cloud project](https://rstudio.cloud/spaces/44864/project/1128916)~~
+- ~~[<i class="fas fa-file-archive"></i> Empty RStudio project you can download and unzip on your computer](/files/final-project.zip) (doesn't include any packages, since you're responsible for installing those)~~
 
 
 ## Resources
@@ -56,9 +63,9 @@ You might find this evaluation (and its proposal) of a truancy program in the Pr
 
 ## Suggested outline
 
-Here's an outline of what you'll need to do.^[If you did problem sets 4 and 5, you've already done a lot of this work! I don't recommend simply copying/pasting it as is into here—you'll want to polish it up a little for this final report.] You can download this as an RMarkdown file and change the text if you want. I've also included this as an RMarkdown file in the empty RStudio.cloud project.
+Here's an outline of what you'll need to do. You did lots of this work in your evaluation assignments. Please don't just copy/paste those assignments as is into this final project—you'll want to policy it up for this final report. You can download this as an RMarkdown file and change the text if you want. I've also included this as an RMarkdown file in the empty RStudio.cloud project.
 
-- [<i class="fab fa-r-project"></i> `final-project-template.Rmd`](/files/final-project/final-project-template.Rmd)
+- [<i class="fab fa-r-project"></i> `final-project-template.Rmd`](/projects/final-project/final-project-template.Rmd)
 
 ---
 
@@ -130,19 +137,21 @@ Given your measurement approach, limits on feasibility, and identification strat
 (**≈100 words**)
 
 
-### Synthetic analysis
+### ~~Synthetic analysis~~
 
-Generate a synthetic (fake) dataset in R with all the variables you'll need for the real life analysis. Analyze the data using your identification strategy. For instance:
+**Due to the COVID-19 pandemic, you do not have to do this section.**
 
-- If you're relying on observational data, close all the backdoors, don't adjust for colliders, and make a strong argument for isolation of the causal effect in the absence of treatment/control groups
-- If you're doing an RCT, test the differences in means in the treatment and control groups (and follow all other best practices listed in the World Bank book, checking for balance across groups, etc.)
-- If you're doing diff-in-diff, run a regression model with an interaction term to show the diff-in-diff
-- If you're doing regression discontinuity, check for a jump in the outcome variable at the cutoff in the running variable
-- If you're using instrumental variables, check the validity of your instrument and run a 2SLS model 
+~~Generate a synthetic (fake) dataset in R with all the variables you'll need for the real life analysis. Analyze the data using your identification strategy. For instance:~~
 
-Include robustness checks to ensure the validity of your effect (i.e. if you're doing regression discontinuity, test different bandwidths and kernel types; etc.)
+- ~~If you're relying on observational data, close all the backdoors with matching or inverse probability weighting, don't adjust for colliders, and make a strong argument for isolation of the causal effect in the absence of treatment/control groups~~
+- ~~If you're doing an RCT, test the differences in means in the treatment and control groups (and follow all other best practices listed in the World Bank book, checking for balance across groups, etc.)~~
+- ~~If you're doing diff-in-diff, run a regression model with an interaction term to show the diff-in-diff~~
+- ~~If you're doing regression discontinuity, check for a jump in the outcome variable at the cutoff in the running variable~~
+- ~~If you're using instrumental variables, check the validity of your instrument and run a 2SLS model~~
 
-(**As many words as you need to fully describe your analysis and results**)
+~~Include robustness checks to ensure the validity of your effect (i.e. if you're doing regression discontinuity, test different bandwidths and kernel types; etc.)~~
+
+~~(**As many words as you need to fully describe your analysis and results**)~~
 
 ### Conclusion
 
