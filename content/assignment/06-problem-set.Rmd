@@ -32,7 +32,7 @@ Remember, if you're struggling, *please* talk to me. Work (***remotely!***) with
 
 2. Rename the R Markdown file named `your-name_problem-set-6.Rmd` to something that matches your name and open it in RStudio.
 
-3. Complete the tasks given in the R Markdown file. You can definitely copy, paste, and adapt from other code in the document or the class page on RDD from [Week 11](/class/12-class/)—don't try to write everything from scratch!. You'll need to insert your own code chunks. Rather than typing them by hand (that's tedious!), use the "Insert" button at the top of the editing window, or press "ctrl + alt + I" on Windows, or "⌥ + ⌘ + I" on macOS.
+3. Complete the tasks given in the R Markdown file. You can definitely copy, paste, and adapt from other code in the document or the class page on instrumental variables from [Week 12](/class/12-class/)—don't try to write everything from scratch!. You'll need to insert your own code chunks. Rather than typing them by hand (that's tedious!), use the "Insert" button at the top of the editing window, or press "ctrl + alt + I" on Windows, or "⌥ + ⌘ + I" on macOS.
 
 ```{r insert-chunk-button, echo=FALSE, out.width="19%", indent="    "}
 knitr::include_graphics("/img/assignments/insert-chunk-button.png", error = FALSE)
