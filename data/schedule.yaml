@@ -111,7 +111,7 @@ lessons:
     assignment: "07-problem-set"
     
   - title: '<i class="fas fa-star"></i> **Exam 2**'
-    date: "April 12–April 18"
+    date: "April 12–April 22"
 
   - title: '<span class="fake-header-table">Applied evaluation</span>'
     header: True
@@ -124,7 +124,7 @@ lessons:
     date: "April 22"
     reading: "14-reading"
 
-  - title: "Code-through due"
+  - title: "~~Code-through due~~ **Cancelled because of COVID-19**"
     date: "April 22"
     assignment: "code-through"
 
