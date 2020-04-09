@@ -14,10 +14,10 @@ menu:
     weight: 12
 type: docs
 weight: 12
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
+pdf: /slides/PMAP-8521_2020-04-08.pdf
+thumb: /slides/PMAP-8521_2020-04-08.png
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ## Slides
@@ -25,6 +25,1159 @@ editor_options:
 `r blogdown::shortcode("slides")`
 
 
+## Lecture videos
+
+Videos for each section of the lecture and the R demonstration are [available at this YouTube playlist](https://www.youtube.com/playlist?list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW).
+
+1. [Introduction](https://www.youtube.com/watch?v=Dc4AomEiIcQ&list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&index=1)
+2. [Endogeneity & exogeneity](https://www.youtube.com/watch?v=VNI6pWjpF7g&list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&index=2)
+3. [Instruments](https://www.youtube.com/watch?v=xkC5LOeQtAg&list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&index=3)
+4. [Using instruments](https://www.youtube.com/watch?v=vRASR3zzx6c&list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&index=4)
+5. IV with R (forthcoming)
+6. Treatment effects & compliance (forthcoming)
+
+You can also watch the playlist (and skip around to different sections) here:
+
+<div class="embed-responsive embed-responsive-16by9">
+<iframe class="embed-responsive-item" src="https://www.youtube.com/embed/videoseries?list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
+## R stuff
+
+Download all the R stuff you need to play along at home: [<i class="fas fa-file-archive"></i> `week-12.zip`](/projects/week-12.zip). You can also [open an RStudio.cloud project](https://rstudio.cloud/spaces/44864/project/1116673) with everything ready to go.
+
+
+## Get data for examples
+
+Download these CSV files and put them in a folder named `data` in a new RStudio project:
+
+- [<i class="fas fa-table"></i> `father_education.csv`](/data/father_education.csv)
+- [<i class="fas fa-table"></i> `wage2.csv`](/data/wage2.csv)
+- [<i class="fas fa-table"></i> `card.csv`](/data/card.csv)
+- [<i class="fas fa-table"></i> `bed_nets_observed.csv`](/data/bed_nets_observed.csv)
+- [<i class="fas fa-table"></i> `bed_nets_time_machine.csv`](/data/bed_nets_time_machine.csv)
+
+
+## IV/2SLS examples
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)   # For ggplot, %>%, and friends
+library(broom)       # For converting models to data frames
+library(huxtable)    # For side-by-side regression tables
+library(wooldridge)  # For some econometrics datasets
+library(estimatr)    # For iv_robust
+```
+
+```{r include=FALSE}
+# Make all figures use specific dimensions by default
+knitr::opts_chunk$set(fig.align = "center", retina = 2,
+                      fig.width = 7, fig.height = 4.2)
+
+options(digits = 3)
+
+library(knitr)
+knit_print.data.frame <- function(x, ...) {
+  res = paste(c("", "", kable(x, output = FALSE)), collapse = "\n")
+  asis_output(res)
+}
+
+options('huxtable.knit_print_df' = FALSE)
+registerS3method("knit_print", "data.frame", knit_print.data.frame)
+```
+
+### Education, wages, and parent education (fake data)
+
+```{r include=FALSE}
+ed_fake <- read_csv(here::here("static", "data", "father_education.csv"))
+```
+
+```{r eval=FALSE}
+ed_fake <- read_csv("data/father_education.csv")
+```
+
+We're interested in the perennial econometrics question of whether an extra year of education causes increased wages. In this example we use simulated/fake data that includes the following variables:
+
+| Variable name | Description                                                                           |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `wage`        | Weekly wage                                                                           |
+| `educ`        | Years of education                                                                    |
+| `ability`     | Magical column that measures your ability to work and go to school (omitted variable) |
+| `fathereduc`  | Years of education for father                                                         |
+
+If we could actually measure ability, we could estimate this model, which closes the confounding backdoor posed by ability and isolates just the effect of education on wages:
+
+```{r}
+model_perfect <- lm(wage ~ educ + ability, data = ed_fake)
+tidy(model_perfect)
+```
+
+However, in real life we don't have `ability`, so we're stuck with a naive model:
+
+```{r}
+model_naive <- lm(wage ~ educ, data = ed_fake)
+tidy(model_naive)
+```
+
+The naive model overestimates the effect of education on wages (12.2 vs. 9.24) because of omitted variable bias. Education suffers from endogeneity---there are things in the model (like ability, hidden in the error term) that are correlated with it. Any estimate we calculate will be wrong and biased because of selection effects or omitted variable bias (all different names for endogeneity).
+
+To fix the endogeneity problem, we can use an instrument to remove the endogeneity from education and instead use a special exogeneity-only version of education. Perhaps someone's father's education can be an instrument for education.
+
+To be a valid instrument, it must meet three criteria:
+
+1. **Relevance**: Instrument is correlated with policy variable
+2. **Exclusion**: Instrument is correlated with outcome *only through* the policy variable
+3. **Exogeneity**: Instrument isn't correlated with anything else in the model (i.e. omitted variables)
+
+We can first test relevance by making a scatterplot and running a model of `policy ~ instrument`:
+
+```{r message=FALSE}
+ggplot(ed_fake, aes(x = fathereduc, y = educ)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+check_relevance <- lm(educ ~ fathereduc, data = ed_fake)
+tidy(check_relevance)
+glance(check_relevance)
+```
+
+This looks pretty good! The F-statistic is definitely above 10 (it's 972!), and there's a significant relationship between the instrument and policy. I'd say that this is relevant.
+
+To check for exclusion, we need to see if there's a relationship between father's education and wages that occurs *only* because of education. If we plot it, we'll see a relationship:
+
+```{r message=FALSE}
+ggplot(ed_fake, aes(x = fathereduc, y = wage)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+That's to be expected, since in our model, father's education causes education which causes wages---they should be correlated. We have to use theory to justify the idea that a father's education increases the hourly wage *only because it increases one's education*, and there's no real statistical test for that. 
+
+There's not really a test for exogeneity either, since there's no way to measure other endogenous variables in the model (that's the whole reason we're using IVs in the first place!). Because we have the magical `ability` column in this fake data, we can test it. Father's education shouldn't be related to ability:
+
+```{r message=FALSE}
+ggplot(ed_fake, aes(x = ability, y = fathereduc)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+And it's not! We can safely say that it meets the exclusion assumption.
+
+For the last part---the exogeneity assumption---there's no statistical test. We just have to tell a theory-based story that the number of years of education one's father has is not correlated with anything else in the model (including any omitted variables). Good luck with that---it's probably not a good instrument. This relates to Scott Cunningham's argument that instruments have to be weird. [According to Scott](https://twitter.com/causalinf/status/1194069373935337473):
+
+> The reason I think this is because an instrument doesn’t belong in the structural error term and the structural error term is all the intuitive things that determine your outcome. So it *must* be weird, otherwise it’s probably in the error term.
+
+Let's just pretend that father's education *is* a valid instrument and move on :)
+
+Now we can do two-stage least squares (2SLS) regressin and use the instrument to filter out the endogenous part of education. The first stage predicts education based on the instrument (we already ran this model earlier when checking for relevance, but we'll do it again just for fun):
+
+```{r}
+first_stage <- lm(educ ~ fathereduc, data = ed_fake)
+```
+
+Now we want to add a column of predicted education to our original dataset. The easiest way to do that is with the `augment_columns()` function from the **broom** library:
+
+```{r}
+ed_fake_with_prediction <- augment_columns(first_stage, ed_fake)
+head(ed_fake_with_prediction)
+```
+
+Note a couple of these new columns. `.fitted` is the fitted/predicted value of education, and it's the version of education with endogeneity arguably removed. `.resid` shows how far off the prediction is from `educ`. The other columns don't matter so much.
+
+Instead of dealing with weird names like `.fitted`, I like to rename the fitted variable to something more understandable after I use `augment_columns`:
+
+```{r}
+ed_fake_with_prediction <- augment_columns(first_stage, ed_fake) %>% 
+  rename(educ_hat = .fitted)
+
+head(ed_fake_with_prediction)
+```
+
+We can now use the new `educ_hat` variable in our second stage model:
+
+```{r}
+second_stage <- lm(wage ~ educ_hat, data = ed_fake_with_prediction)
+tidy(second_stage)
+```
+
+The estimate for `educ_hat` is arguably more accurate now because we've used the instrument to remove the endogenous part of education and should only have the exogenous part.
+
+We can put all the models side-by-side to compare them:
+
+```{r}
+huxreg(list("Perfect" = model_perfect, "OLS" = model_naive, "2SLS" = second_stage))
+```
+
+Note how the coefficient for `educ_hat` in the 2SLS model is basically the same as the coefficient for `educ` in the perfect model that accounts for ability. That's the magic of instrumental variables!
+
+
+### Education, wages, and parent education (real data)
+
+This data comes from the `wage2` dataset in the **wooldridge** R package (and it's real!). Wages are measured in monthly earnings in 1980 dollars.
+
+```{r include=FALSE}
+write_csv(wage2, here::here("static", "data", "wage2.csv"))
+```
+
+```{r include=FALSE}
+wage2 <- read_csv(here::here("static", "data", "wage2.csv"))
+```
+
+```{r eval=FALSE}
+wage2 <- read_csv("data/wage2.csv")
+```
+
+```{r}
+ed_real <- wage2 %>% 
+  rename(education = educ, education_dad = feduc, education_mom = meduc) %>%
+  na.omit()  # Get rid of rows with missing values
+```
+
+We want to again estimate the effect of education on wages, but this time we'll use both one's father's education and one's mother's education as instruments. Here's the naive estimation of the relationship, which suffers from endogeneity:
+
+```{r}
+model_naive <- lm(wage ~ education, data = ed_real)
+tidy(model_naive)
+```
+
+This is wrong though! Education is endogenous to unmeasured things in the model (like ability, which lives in the error term). We can isolate the exogenous part of education with an instrument.
+
+Before doing any 2SLS models, we want to check the validity of the instruments. Remember, for an instrument to be valid, it should meet these criteria:
+
+1. **Relevance**: Instrument is correlated with policy variable
+2. **Exclusion**: Instrument is correlated with outcome *only through* the policy variable
+3. **Exogeneity**: Instrument isn't correlated with anything else in the model (i.e. omitted variables)
+
+We can check for relevance by looking at the relationship between the instruments and education:
+
+```{r message=FALSE}
+# Combine father's and mother's education into one column so we can plot both at the same time
+ed_real_long <- ed_real %>% 
+  pivot_longer(cols = c(education_dad, education_mom), 
+               names_to = "instrument", values_to = "instrument_value")
+
+ggplot(ed_real_long, aes(x = instrument_value, y = education)) +
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~ instrument)
+```
+
+```{r}
+model_check_instruments <- lm(education ~ education_dad + education_mom, 
+                              data = ed_real)
+tidy(model_check_instruments)
+glance(model_check_instruments)
+```
+
+There's a clear relationship between both of the instruments and education, and the coefficients for each are signficiant. The F-statistic for the model is 83, which is higher than 10, which is a good sign of a strong instrument.
+
+We can check for exclusion in part by looking at the relationship between the instruments and the outcome, or wages. We should see some relationship:
+
+```{r message=FALSE}
+ggplot(ed_real_long, aes(x = instrument_value, y = wage)) +
+  geom_point() + 
+  geom_smooth(method = "lm") +
+  facet_wrap(~ instrument)
+```
+
+And we do! Now we just have to make the case that the only reason there's a relationship is that parental education only influences wages through education. Good luck with that.
+
+The last step is to prove exogeneity---that parental education is not correlated with education or wages. Good luck with that too.
+
+Assuming that parental education is a good instrument, we can use it to remove the endogenous part of education using 2SLS. In the first stage, we predict education using our instruments:
+
+```{r}
+first_stage <- lm(education ~ education_dad + education_mom, data = ed_real)
+```
+
+We can then extract the predicted education and add it to our main dataset, renaming the `.fitted` variable to something more useful along the way:
+
+```{r}
+ed_real_with_predicted <- augment_columns(first_stage, ed_real) %>% 
+  rename(education_hat = .fitted)
+```
+
+Finally, we can use predicted education to estimate the exogenous effect of education on wages:
+
+```{r}
+second_stage <- lm(wage ~ education_hat, 
+                   data = ed_real_with_predicted)
+tidy(second_stage)
+```
+
+That should arguably be our actual effect! Let's compare it to the naive model:
+
+```{r eval=FALSE}
+huxreg(list("OLS" = model_naive, "2SLS" = second_stage))
+```
+
+```{r echo=FALSE}
+huxreg(list("OLS" = model_naive, "2SLS" = second_stage)) %>% 
+  set_position("left")
+```
+
+The 2SLS effect is roughly twice as large and is arguably more accurate, since it has removed the endogeneity from education. An extra year of school leads to an extra \$111.56 dollars a month in income (in 1980 dollars).
+
+If you don't want to go through the hassle of doing the two stages by hand, you can use the `iv_robust()` function from the **estimatr** package to do both stages at the same time. The second stage goes on the left side of the `|`, just like a normal regression. The first stage goes on the right side of the `|`:
+
+```{r}
+model_same_time <- iv_robust(wage ~ education | education_dad + education_mom,
+                             data = ed_real)
+tidy(model_same_time)
+```
+
+We should get the same coefficient as the second stage, but the standard errors with `iv_robust` are more accurate. The only problem with `iv_robust` is that there's no way to see the first stage, so if you want to check for relevancy or show the F-test or show the coefficients for the instruments, you'll have to run a `first_stage` model on your own.
+
+Models from `iv_robust()` also work with `huxreg()`. Note how the education variable isn't renamed `educ_hat` in the `iv_robust()` version—it's still using predicted education even if it's not obvious
+
+```{r}
+huxreg(list("OLS" = model_naive, "2SLS" = second_stage, 
+            "2SLS iv_robust" = model_same_time))
+```
+
+
+### Education, wages, and distance to college (real data)
+
+For this last example we'll estimate the effect of education on wages using a different instrument—geographic proximity to colleges. This data comes from David Card's 1995 study where he did the same thing, and it's available in the **wooldridge** library as `card`. You can find a description of all variables [here](http://fmwww.bc.edu/ec-p/data/wooldridge/card.des); we'll use these:
+
+| Variable name | Description                                           |
+| ------------- | ----------------------------------------------------- |
+| `lwage`       | Annual wage (log form)                                |
+| `educ`        | Years of education                                    |
+| `nearc4`      | Living close to college (=1) or far from college (=0) |
+| `smsa`        | Living in metropolitan area (=1) or not (=0)          |
+| `exper`       | Years of experience                                   |
+| `expersq`     | Years of experience (squared term)                    |
+| `black`       | Black (=1), not black (=0)                            |
+| `south`       | Living in the south (=1) or not (=0)                  |
+
+Once again, Card wants to estimate the impact of education on wage. But to solve the ability bias, he utilizes a different instrumental variable: **proximity to college**. He provides arguments to support each of three main characteristics of a good instrumental variable:
+
+1. **Relevancy**: People who live close to a 4-year college have easier access to education at a lower costs (no commuting costs and time nor accommodation costs), so they have greater incentives to pursue education.
+3. **Exclusion**: Proximity to a college has no effect on your annual income, unless you decide to pursue further education because of the nearby college. 
+2. **Exogeneity**: Individual ability does not depend on proximity to a college.
+
+Therefore, he estimates a model where:
+
+**First stage:**
+
+$$
+\widehat{\text{Educ}} = \beta_0 + \beta_1\text{nearc4} + \beta_{2-6}\text{Control variables}
+$$
+
+**Second stage:**
+
+$$
+\text{lwage} = \beta_0 + \beta_1 \widehat{\text{Educ}} + \beta_{2-6}\text{Control variables}
+$$
+
+He controls for five things: `smsa66 + exper + expersq + black + south66`. 
+
+We can do the same thing. **IMPORTANT NOTE**: When you include controls, [every control variable needs to go in *both stages*](https://stats.stackexchange.com/a/177752/3025). The only things from the first stage that don't carry over to the second stage are the instruments—notice how `nearc4` is only in the first stage, since it's the instrument, but it's not in the second stage. The other controls are all in both stages. 
+
+```{r include=FALSE}
+write_csv(card, here::here("static", "data", "card.csv"))
+```
+
+```{r include=FALSE}
+card <- read_csv(here::here("static", "data", "card.csv"))
+```
+
+```{r eval=FALSE}
+card <- read_csv("data/card.csv")
+```
+
+```{r}
+# First we'll build a naive model without any instruments so we can see the bias
+# in the educ coefficient
+naive_model <- lm(lwage ~ educ + smsa66 + exper + expersq + black + south66, 
+                  data = card)
+
+# Then we'll run the first stage, predicting educ with nearc4 + all the controls
+first_stage <- lm(educ ~ nearc4 + smsa66 + exper + expersq + black + south66,
+                  data = card)
+
+# Then we'll add the fitted education values into the original dataset and
+# rename the .fitted column so it's easier to work with
+card <- augment_columns(first_stage, card) %>% 
+  rename(educ_hat = .fitted)
+
+# Finally we can run the second stage model using the predicted education from
+# the first stage
+second_stage <- lm(lwage ~ educ_hat + smsa66 + exper + expersq + black + south66, 
+                  data = card)
+
+# Just for fun, we can do all of this at the same time with iv_robsust
+model_2sls <- iv_robust(lwage ~ educ + smsa66 + exper + expersq + black + south66 | 
+                          nearc4 + smsa66 + exper + expersq + black + south66,
+                        data = card)
+```
+
+```{r}
+huxreg(list("OLS" = naive_model, "2SLS" = second_stage, "2SLS iv_robust" = model_2sls))
+```
+
+Notice how `educ_hat` and `educ` are the same in each of the 2SLS models, and they're higher than the naive uninstrumented model. Because the outcome is log wages, we can say that an extra year of education causes a 15.7% increase in wages.
+
+
+## ITT and CACE
+
+```{r include=FALSE, eval=FALSE}
+# Based on this: https://www.rdatagen.net/post/cace-explored/
+```
+
+### Compliance
+
+In class we talked about the difference between the average treatment effect (ATE), or the average effect of a program for an entire population, and conditional averages treatment effects (CATE), or the average effect of a program for some segment of the population. There are all sorts of CATEs: you can find the CATE for men vs. women, for people who are treated with the program (the average treatment on the treated, or ATT or TOT), for people who are not treated with the program (the average treatment on the untreated, or ATU), and so on.
+
+One important type of CATE is the effect of a program on just those who comply with the program. We can call this the complier average treatment effect, but the acronym would be the same as conditional average treatment effect, so we'll call it the *conditional average causal effect* (CACE).
+
+Thinking about compliance is important. You might randomly assign people to receive treatment or a program, but people might not do what you tell them. Additionally, people might do the program if assigned to do it, but they would have done it anyway. We can split the population into four types of people:
+
+- **Compliers**: People who follow whatever their assignment is (if assigned to treatment, they do the program; if assigned to control, they don't)
+- **Always takers**: People who will receive or seek out the program regardless of assignment (if assigned to treatment, they do the program; if assigned to control, they still do the program)
+- **Never takers**: People who will not receive or seek out the program regardless of assignment (if assigned to treatment, they don't do the program; if assigned to control, they also don't do it)
+- **Defiers**: People who will do the opposite of whatever their assignment is (if assigned to treatment, they don't do the program; if assigned to control, they do the program)
+
+To simplify things, evaluators and econometricians assume that defiers don't exist based on the idea of *monotonicity*, which means that we can assume that the effect of being assigned to treatment only increases the likelihood of participating in the program (and doesn't make it more likely).
+
+The tricky part about trying to find who the compliers are in a sample is that we can't know what people would have done in the absence of treatment. If we see that someone in the experiment was assigned to be in the treatment group and they then participated in the program, they could be a complier (since they did what they were assigned to do), or they could be an always taker (they did what they were assigned to do, but they would have done it anyway). Due to the fundamental problem of causal inference, we cannot know what each person would have done in a parallel world.
+
+We can use data from a hypothetical program to see how these three types of compliers distort our outcomes.
+
+```{r include=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(broom)
+library(estimatr)
+set.seed(1234)
+
+bed_nets <- read_csv(here::here("static", "data", "bed_nets_observed.csv")) %>% 
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+
+bed_nets_time_machine <- read_csv(here::here("static", "data", "bed_nets_time_machine.csv")) %>% 
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+```
+
+```{r eval=FALSE}
+library(tidyverse)
+library(broom)
+library(estimatr)
+
+bed_nets <- read_csv("data/bed_nets_observed.csv") %>% 
+  # Make "No bed net" (control) the base case
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+
+bed_nets_time_machine <- read_csv("data/bed_nets_time_machine.csv") %>% 
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+```
+
+This is what we would be able to see if we could read everyone's minds. There are always takers who will use a bed net regardless of the program, and they'll have higher health outcomes. However, those better outcomes are because of something endogenous—there's something else that makes these people always pursue bed nets, and that's likely related to health. We probably want to not consider them when looking for the program effect. There are never takers who won't ever use a bed net, and they have worse health outcomes. Again, there'd endogeneity here—something is causing them to not use the bed nets, and it likely also causes their health level. We don't want to look at them either.
+
+The middle group—the compliers—are the people we want to focus on. Here we see that the program had an effect when compared to a control group. 
+
+```{r}
+ggplot(bed_nets_time_machine, aes(y = health, x = treatment)) + 
+  geom_point(aes(shape = bed_net, color = status), position = "jitter") + 
+  facet_wrap(~ status) + 
+  labs(color = "Type of person", shape = "Compliance",
+       x = NULL, y = "Health status")
+```
+
+### Finding compliers in actual data
+
+This is what we actually see in the data, though. You can tell who some of the always takers are (those who used bed nets after being assigned to the control group) and who some of the never takers are (those who did not use a bed net after being assigned to the treatment group), but compliers are mixed up with the always and never takers. We have to somehow disentangle them!
+
+```{r}
+ggplot(bed_nets_time_machine, aes(y = health, x = treatment)) + 
+  geom_point(aes(shape = bed_net, color = status), position = "jitter") + 
+  facet_wrap(~ bed_net) +
+  labs(color = "Type of person", shape = "Compliance",
+       x = NULL, y = "Health status")
+```
+
+We can do this by assuming the proportion of compliers, never takers, and always takers are equally spread across treatment and control (which we can assume through the magic of randomization). If that's the case, we can calculate the intent to treat (ITT) effect, which is the CATE of being assigned treatment (or the effect of being assigned treatment on health status, regardless of actual compliance). 
+
+The ITT is actually composed of three different causal effects: the complier average causal effect (CACE), the always taker average causal effect (ATACE), and the never taker average causal effect (NTACE). In the formula below, $\pi$ stands for the proportion of people in each group. Formally, the ITT can be defined like this:
+
+$$
+\begin{aligned}
+\text{ITT} =& \pi_\text{compliers} \times (\text{T} - \text{C})_\text{compliers} + \\
+&\pi_\text{always takers} \times (\text{T} - \text{C})_\text{always takers} + \\
+&\pi_\text{never takers} \times (\text{T} - \text{C})_\text{never takers}
+\end{aligned}
+$$
+
+We can simplify this to this acronymized version:
+
+$$
+\text{ITT} = \pi_\text{C} \text{CACE} + \pi_\text{A} \text{ATACE} + \pi_\text{N} \text{NTACE}
+$$
+
+The number we care about the most here is the CACE, which is stuck in the middle of the equation. If we assume that assignment to treatment doesn't make someone more likely to be an always taker or a never taker, we can set the ATACE and NTACE to zero, leaving us with just three variables to worry about: ITT, $\pi_\text{c}$, and CACE:
+
+$$
+\begin{aligned}
+\text{ITT} =& \pi_\text{C} \text{CACE} + \pi_\text{A} 0 + \pi_\text{N} 0 \\
+& \pi_\text{C} \text{CACE}
+\end{aligned}
+$$
+
+We can use algebra to rearrange this formula so that we're left with an equation that starts with CACE (since that's the value we care about):
+
+$$
+\text{CACE} = \frac{\text{ITT}}{\pi_\text{C}}
+$$
+
+If we can find the ITT and the proportion of compliers, we can find the complier average causal effect (CACE). The ITT is easy to find with a simple OLS model:
+
+```{r}
+itt_model <- lm(health ~ treatment, data = bed_nets)
+
+tidy(itt_model)
+
+ITT <- tidy(itt_model) %>% 
+  filter(term == "treatmentTreatment") %>% 
+  pull(estimate)
+```
+
+The ITT here is ≈6—being assigned treatment increases average health status by 5.99 health points.
+
+The proportion of compliers is a little trickier, but doable with some algebraic trickery. Recall from the graph above that the people who were in the treatment group and who complied are a combination of always takers and compliers. This means we can say:
+
+$$
+\begin{aligned}
+\pi_\text{A} + \pi_\text{C} =& \text{% yes in treatment; or} \\
+\pi_\text{C} =& \text{% yes in treatment} - \pi_\text{A}
+\end{aligned}
+$$
+
+We actually know $\pi_\text{A}$—remember in the graph above that the people who were in the control group and who used bed nets are guaranteed to be always takers (none of them are compliers or never takers). If we assume that the proportion of always takers is the same in both treatment and control, we can use that percent here, giving us this final equation for $\pi_\text{C}$:
+
+$$
+\pi_\text{C} = \text{% yes in treatment} - \text{% yes in control}
+$$
+
+So, if we can find the percent of people assigned to treatment who used bed nets, find the percent of people assigned to control and used bed nets, and subtract the two percentages, we'll have the proportion of compliers, or $\pi_\text{C}$. We can do that with the data we have (61% - 19.5% = 41.5% compliers):
+
+```{r}
+bed_nets %>% 
+  group_by(treatment, bed_net) %>% 
+  summarize(n = n()) %>% 
+  mutate(prop = n / sum(n))
+
+# pi_c = prop yes in treatment - prop yes in control
+pi_c <- 0.6104418 - 0.1952191
+```
+
+Finally, now that we know both the ITT and $\pi_\text{C}$, we can find the CACE (or the LATE):
+
+```{r}
+CACE <- ITT / pi_c
+CACE
+```
+
+It's 14.4, which means that using bed nets increased health by 14 health points *for compliers* (which is a lot bigger than the 6 that we found before). We successfully filtered out the always takers and the never takers, and we have our complier-specific causal effect.
+
+### Finding the CACE/LATE with IV/2SLS
+
+Doing that is super tedious though! What if there was an easier way to find the effect of the bed net program for just the compliers? We can do this with IV/2SLS regression by using assignment to treatment as an instrument. 
+
+Assignment to treatment works as an instrument because it's (1) relevant, since being told to use bed nets is probably highly correlated with using bed nets, (2) exclusive, since the only way that being told to use bed nets can cause changes in health is through the actual use of the bed nets, and (3) exogenous, since being told to use bed nets probably isn't related to other things that cause health.
+
+Here's a 2SLS regression with assignment to treatment as the instrument:
+
+```{r}
+model_2sls <- iv_robust(health ~ bed_net | treatment, data = bed_nets)
+tidy(model_2sls)
+```
+
+The coefficient for `bed_net` is identical to the CACE that we found manually! Instrumental variables are helpful for isolated program effects to only compliers when you're dealing with noncompliance.
+
+
 ## Clearest and muddiest things
 
 `r blogdown::shortcode("feedback")`
+
+
+```{r initial-stuff, include=FALSE, eval=FALSE}
+library(tidyverse)
+library(scales)
+library(broom)
+library(huxtable)
+library(ggdag)
+library(modelsummary)
+
+pp_full <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_title <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 6, units = "in", device = cairo_pdf)
+}
+
+pp_short <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 40/3, height = 4.5, units = "in", device = cairo_pdf)
+}
+
+pp_square <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 7.5, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_square_small <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 4, height = 4, units = "in", device = cairo_pdf)
+}
+
+pp_square_short <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 8, height = 4, units = "in", device = cairo_pdf)
+}
+
+pp_square_legend <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = 11, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_half <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = (40/3)/2, height = 7.5, units = "in", device = cairo_pdf)
+}
+
+pp_half_short <- function(file_name) {
+  ggsave(here::here("temp_figs", paste0(file_name, ".pdf")), 
+         width = (40/3)/2, height = 4, units = "in", device = cairo_pdf)
+}
+```
+
+```{r dags, eval=FALSE, include=FALSE}
+status_colors <- c(exposure = "#0074D9", outcome = "#FF851B", latent = "grey50")
+status_colors_backdoor <- c(exposure = "#0074D9", outcome = "#FF851B", latent = "#FF4136")
+
+node_details <- tribble(
+  ~plot1, ~plot2, ~plot3, ~name, ~label, ~x, ~y, ~generic,
+  TRUE, TRUE, TRUE, "treatment", "Education", 3, 1, "Program/policy",
+  TRUE, TRUE, TRUE, "outcome", "Earnings", 1, 1, "Outcome",
+  FALSE, TRUE, TRUE, "unmeasured", "Ability", 2, 2, "Unmeasured confounders",
+  FALSE, FALSE, TRUE, "instrument", "Father's education", 4, 1, "Instrument"
+)
+
+node_labels <- node_details$label %>% 
+  set_names(node_details$name)
+
+node_labels_generic <- node_details$generic %>% 
+  set_names(node_details$name)
+  
+iv_dag1 <- dagify(outcome ~ treatment,
+                  exposure = "treatment",
+                  outcome = "outcome",
+                  coords = filter(node_details, plot1),
+                  labels =  node_labels) %>% 
+  tidy_dagitty() %>% 
+  node_status()
+
+iv_dag2 <- dagify(outcome ~ treatment + unmeasured,
+                  treatment ~ unmeasured,
+                  exposure = "treatment",
+                  outcome = "outcome",
+                  latent = "unmeasured",
+                  coords = filter(node_details, plot2),
+                  labels =  node_labels) %>% 
+  tidy_dagitty() %>% 
+  node_status() %>% 
+  node_exogenous() %>% 
+  node_dconnected() %>% 
+  control_for("unmeasured")
+
+iv_dag3 <- dagify(outcome ~ treatment + unmeasured,
+                  treatment ~ unmeasured + instrument,
+                  exposure = "treatment",
+                  outcome = "outcome",
+                  latent = "unmeasured",
+                  coords = filter(node_details, plot3),
+                  labels =  node_labels) %>% 
+  tidy_dagitty() %>% 
+  node_status() %>% 
+  node_exogenous() %>% 
+  node_dconnected() %>% 
+  control_for("unmeasured")
+
+iv_dag4 <- dagify(outcome ~ treatment + unmeasured,
+                  treatment ~ unmeasured + instrument,
+                  exposure = "treatment",
+                  outcome = "outcome",
+                  latent = "unmeasured",
+                  coords = filter(node_details, plot3),
+                  labels =  node_labels_generic) %>% 
+  tidy_dagitty() %>% 
+  node_status() %>% 
+  node_exogenous() %>% 
+  node_dconnected() %>% 
+  control_for("unmeasured")
+
+
+ggplot(iv_dag1, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 12,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) + 
+  theme_dag(base_size = 28)
+pp_square("iv_dag1")
+
+
+ggplot(iv_dag2, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(start_cap = ggraph::circle(2, "lines"),
+                 end_cap = ggraph::circle(2, "lines"),
+                 edge_width = 1.5,
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 18) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 10,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors, na.value = "grey20") +
+  scale_fill_manual(values = status_colors, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE) +
+  theme_dag(base_size = 28)
+pp_square_short("iv_dag2")
+
+ggplot(iv_dag2, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(aes(edge_colour = adjusted),
+                 start_cap = ggraph::circle(2, "lines"),
+                 end_cap = ggraph::circle(2, "lines"),
+                 edge_width = 1.5,
+                 arrow_bidirected = grid::arrow(length = grid::unit(0.75, "lines"), 
+                                                type = "closed")) +
+  ggraph::scale_edge_colour_manual(values = c(unadjusted = "black", adjusted = "#FF4136")) +
+  geom_dag_point(aes(color = status), size = 18) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 10,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors_backdoor, na.value = "grey20") +
+  scale_fill_manual(values = status_colors_backdoor, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE, edge_colour = FALSE) +
+  theme_dag(base_size = 28)
+pp_square_short("iv_dag2a")
+
+ggplot(iv_dag3, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(aes(edge_colour = adjusted),
+                 start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 14,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(6, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors_backdoor, na.value = "grey20") +
+  ggraph::scale_edge_colour_manual(values = c(unadjusted = "black", adjusted = "#FF4136")) +
+  scale_fill_manual(values = status_colors_backdoor, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE, edge_colour = FALSE) +
+  theme_dag(base_size = 28)
+pp_title("iv_dag3")
+
+
+ggplot(iv_dag4, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(aes(edge_colour = adjusted),
+                 start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1,
+                       color = "white", fontface = "bold", size = 14,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(6, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors_backdoor, na.value = "grey20") +
+  ggraph::scale_edge_colour_manual(values = c(unadjusted = "black", adjusted = "#FF4136")) +
+  scale_fill_manual(values = status_colors_backdoor, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE, edge_colour = FALSE) +
+  theme_dag(base_size = 28)
+pp_title("iv_dag4")
+```
+
+```{r fathereduc-example, include=FALSE, eval=FALSE}
+set.seed(103)
+experience <- rnorm(1000, 50000, 10000)   # Experience (control variable, but not used here)
+ability <- rnorm(1000, 35000, 10000)      # Ability
+fathereduc  <- rnorm(1000, 15000, 20000)  # Father's education (IV)
+ex1 <- rnorm(1000, 26000, 10000)          # Error for experience
+ey <- 0.43 * rnorm(1000, 50000, 10000)      # Error for outcome
+
+educ <- 3.7 + 0.52*fathereduc + 0.40*ability + ex1  # Education (policy variable)
+# educ <- 3.7 + 0.52*fathereduc + 0.40*ability + 0.33*experience + ex1  # Education (policy variable)
+
+wage  <- 5 + 0.23*educ + 0.5*ability - ey  # Wage (outcome variable)
+# wage  <- 5 + 0.23*educ + 0.5*ability + 0.2*experience - ey  # Wage (outcome variable)
+
+# Rescale stuff
+wage  <- rescale(wage,  to = c(7.75, 300))           # Rescale from minimum wage to director wage (hourly)
+experience <- rescale(experience, to = c(0, 15))     # Rescale as years of experience
+educ <- rescale(educ, to = c(10, 23))                # Rescale as years of school. Min 10 to max 23 (PhD)
+fathereduc  <- rescale(fathereduc,  to = c(10, 23))  # Rescale father's education
+ability <- rescale(ability, to = c(0, 600))          # Rescale as Hypothetical test scores
+
+# Put in data frame and save
+father_education <- tibble(wage, educ, ability, fathereduc)
+
+write_csv(father_education, here::here("static", "data", "father_education.csv"))
+
+
+gof_things <- modelsummary::gof_map %>% 
+  mutate(omit = ifelse(raw %in% c("AIC", "BIC", "logLik"), TRUE, omit))
+
+model1 <- lm(wage ~ educ, data = father_education)
+model2 <- lm(wage ~ educ + ability, data = father_education)
+
+msummary(list("Unadjusted" = model1, "Adjusted" = model2),
+         gof_map = gof_things, stars = TRUE) %>% 
+  gt::tab_spanner(label = "Outcome = Wage", columns = c("Unadjusted", "Adjusted")) %>% 
+  clean_latex() %>% 
+  cat()
+
+
+ggplot(father_education, aes(y = educ, x = fathereduc)) +
+  geom_point(size = 3, alpha = 0.5, color = "white", fill = "black", pch = 21) +
+  geom_smooth(method = "lm", formula = y ~ x, size = 2, color = "#0074D9") +
+  labs(y = "Years of education", x = "Years of father's education") +
+  theme_bw(base_size = 20, base_family = "Fira Sans Condensed")
+pp_square_small("iv_educ_fathereduc")
+
+ggplot(father_education, aes(x = fathereduc, y = wage)) +
+  geom_point(size = 3, alpha = 0.5, color = "white", fill = "black", pch = 21) +
+  geom_smooth(method = "lm", formula = y ~ x, size = 2, color = "#85144b") +
+  labs(x = "Years of father's education", y = "Wage (not for father)") +
+  theme_bw(base_size = 20, base_family = "Fira Sans Condensed")
+pp_square_small("iv_fathereduc_wage")
+
+first_stage <- lm(educ ~ fathereduc, data = father_education)
+tidy(first_stage)
+glance(first_stage)
+
+data_with_predictions <- augment_columns(first_stage, data = father_education) %>% 
+  rename(educ_hat = .fitted) %>% 
+  select(wage, ability, fathereduc, educ, educ_hat)
+
+data_with_predictions <- augment_columns(first_stage, data = father_education) %>% 
+  rename(educ_hat = .fitted)
+
+second_stage <- lm(wage ~ educ_hat, data = data_with_predictions)
+tidy(second_stage)
+
+huxreg(model1, model2, model_second)
+
+msummary(list("Unadjusted naive" = model1, "Forbidden model" = model2,
+              "2SLS IV" = second_stage),
+         gof_map = gof_things, stars = TRUE) %>% 
+  gt::tab_spanner(label = "Outcome = Wage", 
+                  columns = c("Unadjusted naive", "Forbidden model", "2SLS IV")) %>% 
+  clean_latex() %>% 
+  cat()
+
+library(estimatr)
+model_estimatr <- iv_robust(wage ~ educ | fathereduc, 
+                            data = father_education)
+
+iv_gof <- tribble(
+  ~raw, ~clean, ~fmt, ~omit,
+  "N", "", "", TRUE,
+  "p.value.endogeneity", "", "", TRUE,
+  "p.value.overid", "", "", TRUE,
+  "p.value.weakinst", "", "", TRUE,
+  "se_type", "", "", TRUE,
+  "statistic.endogeneity", "", "", TRUE,
+  "statistic.overid", "", "", TRUE,
+  "statistic.weakinst", "", "", TRUE
+)
+
+msummary(list("Unadjusted naive" = model1, "Forbidden model" = model2,
+              "2SLS IV (by hand)" = second_stage, "2SLS IV (iv_robust)" = model_estimatr),
+         gof_map = bind_rows(gof_things, iv_gof), stars = TRUE) %>% 
+  gt::tab_spanner(label = "Outcome = Wage", 
+                  columns = c("Unadjusted naive", "Forbidden model", 
+                              "2SLS IV (by hand)", "2SLS IV (iv_robust)")) %>% 
+  clean_latex() %>% 
+  cat()
+```
+
+```{r covid-19-dag, eval=FALSE, include=FALSE}
+status_colors <- c(exposure = "#0074D9", outcome = "#FF851B", latent = "grey50")
+status_colors_backdoor <- c(exposure = "#0074D9", outcome = "#FF851B", latent = "#FF4136")
+
+covid_nodes <- tribble(
+  ~name, ~label, ~x, ~y,
+  "treatment", "School attendance", 3, 1, 
+  "outcome", "Grades (or earnings)", 1, 1, 
+  "unmeasured", "Unmeasured confounders", 2, 3,
+  "instrument", "COVID-19", 4, 2 
+)
+
+node_labels_covid <- covid_nodes$label %>% 
+  set_names(covid_nodes$name)
+
+covid_dag1 <- dagify(outcome ~ treatment + unmeasured,
+                     treatment ~ unmeasured + instrument,
+                     exposure = "treatment",
+                     outcome = "outcome",
+                     latent = "unmeasured",
+                     coords = covid_nodes,
+                     labels =  node_labels_covid) %>%
+  tidy_dagitty() %>% 
+  node_status() %>% 
+  node_exogenous() %>% 
+  node_dconnected() %>% 
+  control_for("unmeasured")
+
+ggplot(covid_dag1, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(aes(edge_colour = adjusted),
+                 start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1,
+                       color = "white", fontface = "bold", size = 10,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(6, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors_backdoor, na.value = "grey20") +
+  ggraph::scale_edge_colour_manual(values = c(unadjusted = "black", adjusted = "#FF4136")) +
+  scale_fill_manual(values = status_colors_backdoor, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE, edge_colour = FALSE) +
+  theme_dag(base_size = 14)
+pp_title("iv_covid_dag1")
+
+
+covid_nodes_2 <- tribble(
+  ~name, ~label, ~x, ~y,
+  "treatment", "School attendance", 3, 1, 
+  "outcome", "Grades (or earnings)", 1, 1, 
+  "unmeasured", "Unmeasured confounders", 2, 4,
+  "instrument", "COVID-19", 6, 1,
+  "deaths", "Deaths", 4, 6,
+  "health", "Health", 4, 5,
+  "jobs", "Job losses", 4, 4,
+  "isolation", "Social isolation", 4, 3,
+  "anxiety", "Anxiety", 4, 2
+)
+
+node_labels_covid_2 <- covid_nodes_2$label %>% 
+  set_names(covid_nodes_2$name)
+
+covid_dag2 <- dagify(outcome ~ treatment + unmeasured + deaths + health + jobs + isolation + anxiety,
+                     treatment ~ unmeasured + instrument,
+                     deaths ~ instrument,
+                     health ~ instrument,
+                     jobs ~ instrument,
+                     isolation ~ instrument,
+                     anxiety ~ instrument,
+                     exposure = "treatment",
+                     outcome = "outcome",
+                     latent = "unmeasured",
+                     coords = covid_nodes_2,
+                     labels =  node_labels_covid_2) %>%
+  tidy_dagitty() %>% 
+  node_status() %>% 
+  node_exogenous() %>% 
+  node_dconnected() %>% 
+  control_for("unmeasured")
+
+ggplot(covid_dag2, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(aes(edge_colour = adjusted),
+                 start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 8,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y", nudge_x = 1) +
+  scale_color_manual(values = status_colors_backdoor, na.value = "grey20") +
+  ggraph::scale_edge_colour_manual(values = c(unadjusted = "black", adjusted = "#FF4136")) +
+  scale_fill_manual(values = status_colors_backdoor, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE, edge_colour = FALSE) +
+  theme_dag(base_size = 14)
+pp_title("iv_covid_dag2")
+```
+
+```{r multiple-instruments-controls, eval=FALSE, include=FALSE}
+node_details_multiple <- tribble(
+  ~name, ~label, ~x, ~y, 
+  "treatment", "Education", 3, 1, 
+  "outcome", "Earnings", 1, 1, 
+  "unmeasured", "Ability", 2, 1.6,
+  "instrument1", "Father's education", 4, 1,
+  "instrument2", "Mother's education", 4, 1.5
+)
+
+node_labels_multiple <- node_details_multiple$label %>% 
+  set_names(node_details_multiple$name)
+
+multiple_dag1 <- dagify(outcome ~ treatment + unmeasured,
+                        treatment ~ unmeasured + instrument1 + instrument2,
+                        exposure = "treatment",
+                        outcome = "outcome",
+                        latent = "unmeasured",
+                        coords = node_details_multiple,
+                        labels =  node_labels_multiple) %>% 
+  tidy_dagitty() %>% 
+  node_status() %>% 
+  node_exogenous() %>% 
+  node_dconnected() %>% 
+  control_for("unmeasured")
+
+ggplot(multiple_dag1, aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(aes(edge_colour = adjusted),
+                 start_cap = ggraph::circle(3, "lines"),
+                 end_cap = ggraph::circle(3, "lines"),
+                 edge_width = 1.5, 
+                 arrow_directed = grid::arrow(length = grid::unit(0.75, "lines"), type = "closed")) +
+  geom_dag_point(aes(color = status), size = 30) +
+  geom_dag_label_repel(aes(label = label, fill = status), seed = 1234,
+                       color = "white", fontface = "bold", size = 10,
+                       family = "Fira Sans Condensed",
+                       label.padding = grid::unit(0.75, "lines"),
+                       box.padding = grid::unit(2.5, "lines"),
+                       direction = "y") +
+  scale_color_manual(values = status_colors_backdoor, na.value = "grey20") +
+  ggraph::scale_edge_colour_manual(values = c(unadjusted = "black", adjusted = "#FF4136")) +
+  scale_fill_manual(values = status_colors_backdoor, na.value = "grey20") +
+  guides(color = FALSE, fill = FALSE, edge_colour = FALSE) +
+  theme_dag(base_size = 14)
+pp_title("iv_multiple_dag1")
+```
+
+```{r itt-cace-stuff, eval=FALSE, include=FALSE}
+library(tidyverse)
+library(scales)
+library(estimatr)
+
+N <- 2000
+set.seed(1234)
+df <- tibble(
+  status = sample(c("Always taker", "Never taker", "Complier"), N, 
+                  replace = TRUE, prob = c(0.2, 0.4, 0.4)),
+  treatment = sample(c("Treatment", "Control"), N, replace = TRUE, prob = c(0.5, 0.5))
+) %>% 
+  mutate(bed_net_0 = (status == "Always taker") * 1,
+         bed_net_1 = (status != "Never taker") * 1) %>% 
+  mutate(health_0 = case_when(
+    status == "Always taker" ~ rnorm(N, 1, 0.5),
+    status == "Never taker"  ~ rnorm(N, 0, 0.6),
+    status == "Complier"     ~ rnorm(N, 0.1, 0.4),
+  )) %>% 
+  mutate(health_1 = case_when(
+    status == "Always taker" ~ rnorm(N, 1, 0.5),
+    status == "Never taker"  ~ rnorm(N, 0, 0.6),
+    status == "Complier"     ~ rnorm(N, 0.9, 0.7),
+  )) %>% 
+  mutate(bed_net = case_when(
+    treatment == "Treatment" ~ bed_net_1,
+    treatment == "Control"   ~ bed_net_0
+  )) %>% 
+  mutate(health = case_when(
+    bed_net == 0 ~ health_0,
+    bed_net == 1 ~ health_1
+  )) %>% 
+  mutate(bed_net = factor(bed_net, labels = c("No bed net", "Bed net")))
+
+min_health <- min(df$health_0, df$health_1)
+max_health <- max(df$health_0, df$health_1)
+
+df <- df %>% 
+  mutate_at(vars(starts_with("health")), 
+            list(~ rescale(., to = c(0, 100), 
+                           from = c(min_health, max_health))))
+
+df_real <- df %>% 
+  select(treatment, bed_net, health)
+
+write_csv(df, here::here("static", "data", "bed_nets_time_machine.csv"))
+write_csv(df_real, here::here("static", "data", "bed_nets_observed.csv"))
+
+
+ggplot(df, aes(y = health, x = treatment)) + 
+  geom_jitter(aes(shape = bed_net, color = status)) + 
+  facet_wrap(~ status)
+
+
+# ITT
+df_real %>% 
+  group_by(treatment) %>% 
+  summarize(avg = mean(health))
+
+itt_model <- lm(health ~ treatment, data = df_real)
+
+ITT <- coef(itt_model)[[2]]
+
+df_real %>% 
+  group_by(treatment, bed_net) %>% 
+  summarize(n = n()) %>% 
+  mutate(prop = n / sum(n))
+
+# pi_c = prop yes in treatment - prop yes in control
+pi_c <- 0.6104418 - 0.1952191
+
+LATE <- ITT / pi_c
+
+truth <- df %>%
+  filter(status == "Complier") %>% 
+  summarize(LATE = mean(health_1 - health_0))
+
+iv_robust(health ~ bed_net | treatment, data = df)
+
+
+population <- tribble(
+  ~person, ~program_if_trt, ~program_if_ctrl, ~type,
+  1,       TRUE,            TRUE,             "Always takers",
+  2,       TRUE,            TRUE,             "Always takers",
+  3,       FALSE,           FALSE,            "Never takers",
+  4,       FALSE,           FALSE,            "Never takers",
+  5,       TRUE,            FALSE,            "Compliers",
+  6,       TRUE,            FALSE,            "Compliers"
+)
+
+population_long <- population %>% 
+  mutate(person = as.factor(person)) %>% 
+  pivot_longer(cols = starts_with("program"), names_to = "choice") %>% 
+  mutate(choice = factor(choice, labels = c("Assigned to\ntreatment", "Assigned to\ncontrol")),
+         label = ifelse(value, "Does\nprogram", "Does not\ndo program"),
+         value = factor(value, labels = c("Does not do program", "Does program")))
+
+ggplot(population_long, aes(x = choice, y = person)) + 
+  geom_tile(size = 2, color = "white", fill = "grey90") + 
+  geom_text(aes(label = label, color = value), fontface = "bold") +
+  labs(x = NULL, y = NULL) +
+  guides(color = FALSE) +
+  facet_wrap(~ type, scales = "free_y") +
+  theme_minimal() +
+  theme(panel.grid = element_blank(), axis.text.y = element_blank(),
+        strip.text = element_text(face = "bold", size = rel(1))) +
+  theme(legend.position = "bottom")
+```

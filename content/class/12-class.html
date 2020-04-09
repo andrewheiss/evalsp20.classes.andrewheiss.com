@@ -14,10 +14,10 @@ menu:
     weight: 12
 type: docs
 weight: 12
-# pdf: /slides/PMAP-8521_2019-11-04.pdf
-# thumb: /slides/slides_2019-11-04.png
+pdf: /slides/PMAP-8521_2020-04-08.pdf
+thumb: /slides/PMAP-8521_2020-04-08.png
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 <script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
@@ -25,6 +25,21 @@ editor_options:
 <div id="TOC">
 <ul>
 <li><a href="#slides">Slides</a></li>
+<li><a href="#lecture-videos">Lecture videos</a></li>
+<li><a href="#r-stuff">R stuff</a></li>
+<li><a href="#get-data-for-examples">Get data for examples</a></li>
+<li><a href="#iv2sls-examples">IV/2SLS examples</a>
+<ul>
+<li><a href="#education-wages-and-parent-education-fake-data">Education, wages, and parent education (fake data)</a></li>
+<li><a href="#education-wages-and-parent-education-real-data">Education, wages, and parent education (real data)</a></li>
+<li><a href="#education-wages-and-distance-to-college-real-data">Education, wages, and distance to college (real data)</a></li>
+</ul></li>
+<li><a href="#itt-and-cace">ITT and CACE</a>
+<ul>
+<li><a href="#compliance">Compliance</a></li>
+<li><a href="#finding-compliers-in-actual-data">Finding compliers in actual data</a></li>
+<li><a href="#finding-the-cacelate-with-iv2sls">Finding the CACE/LATE with IV/2SLS</a></li>
+</ul></li>
 <li><a href="#clearest-and-muddiest-things">Clearest and muddiest things</a></li>
 </ul>
 </div>
@@ -32,6 +47,1323 @@ editor_options:
 <div id="slides" class="section level2">
 <h2>Slides</h2>
 {{% slides %}}
+</div>
+<div id="lecture-videos" class="section level2">
+<h2>Lecture videos</h2>
+<p>Videos for each section of the lecture and the R demonstration are <a href="https://www.youtube.com/playlist?list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW">available at this YouTube playlist</a>.</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://www.youtube.com/watch?v=Dc4AomEiIcQ&amp;list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&amp;index=1">Introduction</a></li>
+<li><a href="https://www.youtube.com/watch?v=VNI6pWjpF7g&amp;list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&amp;index=2">Endogeneity &amp; exogeneity</a></li>
+<li><a href="https://www.youtube.com/watch?v=xkC5LOeQtAg&amp;list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&amp;index=3">Instruments</a></li>
+<li><a href="https://www.youtube.com/watch?v=vRASR3zzx6c&amp;list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW&amp;index=4">Using instruments</a></li>
+<li>IV with R (forthcoming)</li>
+<li>Treatment effects &amp; compliance (forthcoming)</li>
+</ol>
+<p>You can also watch the playlist (and skip around to different sections) here:</p>
+<div class="embed-responsive embed-responsive-16by9">
+<iframe class="embed-responsive-item" src="https://www.youtube.com/embed/videoseries?list=PLS6tnpTr39sEwZA-iVTI_yw2ACF51XSTW" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+</iframe>
+</div>
+</div>
+<div id="r-stuff" class="section level2">
+<h2>R stuff</h2>
+<p>Download all the R stuff you need to play along at home: <a href="/projects/week-12.zip"><i class="fas fa-file-archive"></i> <code>week-12.zip</code></a>. You can also <a href="https://rstudio.cloud/spaces/44864/project/1116673">open an RStudio.cloud project</a> with everything ready to go.</p>
+</div>
+<div id="get-data-for-examples" class="section level2">
+<h2>Get data for examples</h2>
+<p>Download these CSV files and put them in a folder named <code>data</code> in a new RStudio project:</p>
+<ul>
+<li><a href="/data/father_education.csv"><i class="fas fa-table"></i> <code>father_education.csv</code></a></li>
+<li><a href="/data/wage2.csv"><i class="fas fa-table"></i> <code>wage2.csv</code></a></li>
+<li><a href="/data/card.csv"><i class="fas fa-table"></i> <code>card.csv</code></a></li>
+<li><a href="/data/bed_nets_observed.csv"><i class="fas fa-table"></i> <code>bed_nets_observed.csv</code></a></li>
+<li><a href="/data/bed_nets_time_machine.csv"><i class="fas fa-table"></i> <code>bed_nets_time_machine.csv</code></a></li>
+</ul>
+</div>
+<div id="iv2sls-examples" class="section level2">
+<h2>IV/2SLS examples</h2>
+<pre class="r"><code>library(tidyverse)   # For ggplot, %&gt;%, and friends
+library(broom)       # For converting models to data frames
+library(huxtable)    # For side-by-side regression tables
+library(wooldridge)  # For some econometrics datasets
+library(estimatr)    # For iv_robust</code></pre>
+<div id="education-wages-and-parent-education-fake-data" class="section level3">
+<h3>Education, wages, and parent education (fake data)</h3>
+<pre class="r"><code>ed_fake &lt;- read_csv(&quot;data/father_education.csv&quot;)</code></pre>
+<p>We’re interested in the perennial econometrics question of whether an extra year of education causes increased wages. In this example we use simulated/fake data that includes the following variables:</p>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="86%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>wage</code></td>
+<td>Weekly wage</td>
+</tr>
+<tr class="even">
+<td><code>educ</code></td>
+<td>Years of education</td>
+</tr>
+<tr class="odd">
+<td><code>ability</code></td>
+<td>Magical column that measures your ability to work and go to school (omitted variable)</td>
+</tr>
+<tr class="even">
+<td><code>fathereduc</code></td>
+<td>Years of education for father</td>
+</tr>
+</tbody>
+</table>
+<p>If we could actually measure ability, we could estimate this model, which closes the confounding backdoor posed by ability and isolates just the effect of education on wages:</p>
+<pre class="r"><code>model_perfect &lt;- lm(wage ~ educ + ability, data = ed_fake)
+tidy(model_perfect)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-80.263</td>
+<td align="right">5.659</td>
+<td align="right">-14.2</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">educ</td>
+<td align="right">9.242</td>
+<td align="right">0.343</td>
+<td align="right">27.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">ability</td>
+<td align="right">0.258</td>
+<td align="right">0.007</td>
+<td align="right">35.9</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p>However, in real life we don’t have <code>ability</code>, so we’re stuck with a naive model:</p>
+<pre class="r"><code>model_naive &lt;- lm(wage ~ educ, data = ed_fake)
+tidy(model_naive)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-53.1</td>
+<td align="right">8.492</td>
+<td align="right">-6.25</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">educ</td>
+<td align="right">12.2</td>
+<td align="right">0.503</td>
+<td align="right">24.32</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p>The naive model overestimates the effect of education on wages (12.2 vs. 9.24) because of omitted variable bias. Education suffers from endogeneity—there are things in the model (like ability, hidden in the error term) that are correlated with it. Any estimate we calculate will be wrong and biased because of selection effects or omitted variable bias (all different names for endogeneity).</p>
+<p>To fix the endogeneity problem, we can use an instrument to remove the endogeneity from education and instead use a special exogeneity-only version of education. Perhaps someone’s father’s education can be an instrument for education.</p>
+<p>To be a valid instrument, it must meet three criteria:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Relevance</strong>: Instrument is correlated with policy variable</li>
+<li><strong>Exclusion</strong>: Instrument is correlated with outcome <em>only through</em> the policy variable</li>
+<li><strong>Exogeneity</strong>: Instrument isn’t correlated with anything else in the model (i.e. omitted variables)</li>
+</ol>
+<p>We can first test relevance by making a scatterplot and running a model of <code>policy ~ instrument</code>:</p>
+<pre class="r"><code>ggplot(ed_fake, aes(x = fathereduc, y = educ)) +
+  geom_point() +
+  geom_smooth(method = &quot;lm&quot;)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>check_relevance &lt;- lm(educ ~ fathereduc, data = ed_fake)
+tidy(check_relevance)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">4.396</td>
+<td align="right">0.399</td>
+<td align="right">11.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">fathereduc</td>
+<td align="right">0.757</td>
+<td align="right">0.024</td>
+<td align="right">31.2</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>glance(check_relevance)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">r.squared</th>
+<th align="right">adj.r.squared</th>
+<th align="right">sigma</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">df</th>
+<th align="right">logLik</th>
+<th align="right">AIC</th>
+<th align="right">BIC</th>
+<th align="right">deviance</th>
+<th align="right">df.residual</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.493</td>
+<td align="right">0.493</td>
+<td align="right">1.6</td>
+<td align="right">972</td>
+<td align="right">0</td>
+<td align="right">2</td>
+<td align="right">-1885</td>
+<td align="right">3777</td>
+<td align="right">3791</td>
+<td align="right">2541</td>
+<td align="right">998</td>
+</tr>
+</tbody>
+</table>
+<p>This looks pretty good! The F-statistic is definitely above 10 (it’s 972!), and there’s a significant relationship between the instrument and policy. I’d say that this is relevant.</p>
+<p>To check for exclusion, we need to see if there’s a relationship between father’s education and wages that occurs <em>only</em> because of education. If we plot it, we’ll see a relationship:</p>
+<pre class="r"><code>ggplot(ed_fake, aes(x = fathereduc, y = wage)) +
+  geom_point() +
+  geom_smooth(method = &quot;lm&quot;)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>That’s to be expected, since in our model, father’s education causes education which causes wages—they should be correlated. We have to use theory to justify the idea that a father’s education increases the hourly wage <em>only because it increases one’s education</em>, and there’s no real statistical test for that.</p>
+<p>There’s not really a test for exogeneity either, since there’s no way to measure other endogenous variables in the model (that’s the whole reason we’re using IVs in the first place!). Because we have the magical <code>ability</code> column in this fake data, we can test it. Father’s education shouldn’t be related to ability:</p>
+<pre class="r"><code>ggplot(ed_fake, aes(x = ability, y = fathereduc)) +
+  geom_point() +
+  geom_smooth(method = &quot;lm&quot;)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>And it’s not! We can safely say that it meets the exclusion assumption.</p>
+<p>For the last part—the exogeneity assumption—there’s no statistical test. We just have to tell a theory-based story that the number of years of education one’s father has is not correlated with anything else in the model (including any omitted variables). Good luck with that—it’s probably not a good instrument. This relates to Scott Cunningham’s argument that instruments have to be weird. <a href="https://twitter.com/causalinf/status/1194069373935337473">According to Scott</a>:</p>
+<blockquote>
+<p>The reason I think this is because an instrument doesn’t belong in the structural error term and the structural error term is all the intuitive things that determine your outcome. So it <em>must</em> be weird, otherwise it’s probably in the error term.</p>
+</blockquote>
+<p>Let’s just pretend that father’s education <em>is</em> a valid instrument and move on :)</p>
+<p>Now we can do two-stage least squares (2SLS) regressin and use the instrument to filter out the endogenous part of education. The first stage predicts education based on the instrument (we already ran this model earlier when checking for relevance, but we’ll do it again just for fun):</p>
+<pre class="r"><code>first_stage &lt;- lm(educ ~ fathereduc, data = ed_fake)</code></pre>
+<p>Now we want to add a column of predicted education to our original dataset. The easiest way to do that is with the <code>augment_columns()</code> function from the <strong>broom</strong> library:</p>
+<pre class="r"><code>ed_fake_with_prediction &lt;- augment_columns(first_stage, ed_fake)
+head(ed_fake_with_prediction)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">wage</th>
+<th align="right">educ</th>
+<th align="right">ability</th>
+<th align="right">fathereduc</th>
+<th align="right">.fitted</th>
+<th align="right">.se.fit</th>
+<th align="right">.resid</th>
+<th align="right">.hat</th>
+<th align="right">.sigma</th>
+<th align="right">.cooksd</th>
+<th align="right">.std.resid</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">146</td>
+<td align="right">18.1</td>
+<td align="right">348</td>
+<td align="right">17.2</td>
+<td align="right">17.4</td>
+<td align="right">0.055</td>
+<td align="right">0.670</td>
+<td align="right">0.001</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">0.420</td>
+</tr>
+<tr class="even">
+<td align="right">148</td>
+<td align="right">15.8</td>
+<td align="right">181</td>
+<td align="right">14.0</td>
+<td align="right">15.0</td>
+<td align="right">0.075</td>
+<td align="right">0.862</td>
+<td align="right">0.002</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">0.541</td>
+</tr>
+<tr class="odd">
+<td align="right">162</td>
+<td align="right">15.1</td>
+<td align="right">337</td>
+<td align="right">16.0</td>
+<td align="right">16.5</td>
+<td align="right">0.051</td>
+<td align="right">-1.397</td>
+<td align="right">0.001</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">-0.876</td>
+</tr>
+<tr class="even">
+<td align="right">105</td>
+<td align="right">16.5</td>
+<td align="right">106</td>
+<td align="right">21.4</td>
+<td align="right">20.6</td>
+<td align="right">0.134</td>
+<td align="right">-4.145</td>
+<td align="right">0.007</td>
+<td align="right">1.59</td>
+<td align="right">0.024</td>
+<td align="right">-2.607</td>
+</tr>
+<tr class="odd">
+<td align="right">168</td>
+<td align="right">18.8</td>
+<td align="right">302</td>
+<td align="right">16.5</td>
+<td align="right">16.9</td>
+<td align="right">0.051</td>
+<td align="right">1.941</td>
+<td align="right">0.001</td>
+<td align="right">1.59</td>
+<td align="right">0.001</td>
+<td align="right">1.217</td>
+</tr>
+<tr class="even">
+<td align="right">173</td>
+<td align="right">16.0</td>
+<td align="right">284</td>
+<td align="right">15.4</td>
+<td align="right">16.1</td>
+<td align="right">0.055</td>
+<td align="right">-0.055</td>
+<td align="right">0.001</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">-0.035</td>
+</tr>
+</tbody>
+</table>
+<p>Note a couple of these new columns. <code>.fitted</code> is the fitted/predicted value of education, and it’s the version of education with endogeneity arguably removed. <code>.resid</code> shows how far off the prediction is from <code>educ</code>. The other columns don’t matter so much.</p>
+<p>Instead of dealing with weird names like <code>.fitted</code>, I like to rename the fitted variable to something more understandable after I use <code>augment_columns</code>:</p>
+<pre class="r"><code>ed_fake_with_prediction &lt;- augment_columns(first_stage, ed_fake) %&gt;% 
+  rename(educ_hat = .fitted)
+
+head(ed_fake_with_prediction)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">wage</th>
+<th align="right">educ</th>
+<th align="right">ability</th>
+<th align="right">fathereduc</th>
+<th align="right">educ_hat</th>
+<th align="right">.se.fit</th>
+<th align="right">.resid</th>
+<th align="right">.hat</th>
+<th align="right">.sigma</th>
+<th align="right">.cooksd</th>
+<th align="right">.std.resid</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">146</td>
+<td align="right">18.1</td>
+<td align="right">348</td>
+<td align="right">17.2</td>
+<td align="right">17.4</td>
+<td align="right">0.055</td>
+<td align="right">0.670</td>
+<td align="right">0.001</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">0.420</td>
+</tr>
+<tr class="even">
+<td align="right">148</td>
+<td align="right">15.8</td>
+<td align="right">181</td>
+<td align="right">14.0</td>
+<td align="right">15.0</td>
+<td align="right">0.075</td>
+<td align="right">0.862</td>
+<td align="right">0.002</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">0.541</td>
+</tr>
+<tr class="odd">
+<td align="right">162</td>
+<td align="right">15.1</td>
+<td align="right">337</td>
+<td align="right">16.0</td>
+<td align="right">16.5</td>
+<td align="right">0.051</td>
+<td align="right">-1.397</td>
+<td align="right">0.001</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">-0.876</td>
+</tr>
+<tr class="even">
+<td align="right">105</td>
+<td align="right">16.5</td>
+<td align="right">106</td>
+<td align="right">21.4</td>
+<td align="right">20.6</td>
+<td align="right">0.134</td>
+<td align="right">-4.145</td>
+<td align="right">0.007</td>
+<td align="right">1.59</td>
+<td align="right">0.024</td>
+<td align="right">-2.607</td>
+</tr>
+<tr class="odd">
+<td align="right">168</td>
+<td align="right">18.8</td>
+<td align="right">302</td>
+<td align="right">16.5</td>
+<td align="right">16.9</td>
+<td align="right">0.051</td>
+<td align="right">1.941</td>
+<td align="right">0.001</td>
+<td align="right">1.59</td>
+<td align="right">0.001</td>
+<td align="right">1.217</td>
+</tr>
+<tr class="even">
+<td align="right">173</td>
+<td align="right">16.0</td>
+<td align="right">284</td>
+<td align="right">15.4</td>
+<td align="right">16.1</td>
+<td align="right">0.055</td>
+<td align="right">-0.055</td>
+<td align="right">0.001</td>
+<td align="right">1.60</td>
+<td align="right">0.000</td>
+<td align="right">-0.035</td>
+</tr>
+</tbody>
+</table>
+<p>We can now use the new <code>educ_hat</code> variable in our second stage model:</p>
+<pre class="r"><code>second_stage &lt;- lm(wage ~ educ_hat, data = ed_fake_with_prediction)
+tidy(second_stage)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-3.11</td>
+<td align="right">14.370</td>
+<td align="right">-0.216</td>
+<td align="right">0.829</td>
+</tr>
+<tr class="even">
+<td align="left">educ_hat</td>
+<td align="right">9.25</td>
+<td align="right">0.856</td>
+<td align="right">10.814</td>
+<td align="right">0.000</td>
+</tr>
+</tbody>
+</table>
+<p>The estimate for <code>educ_hat</code> is arguably more accurate now because we’ve used the instrument to remove the endogenous part of education and should only have the exogenous part.</p>
+<p>We can put all the models side-by-side to compare them:</p>
+<pre class="r"><code>huxreg(list(&quot;Perfect&quot; = model_perfect, &quot;OLS&quot; = model_naive, &quot;2SLS&quot; = second_stage))</code></pre>
+<table class="huxtable" style="border-collapse: collapse; margin-bottom: 2em; margin-top: 2em; width: 50%; margin-left: auto; margin-right: auto;  ">
+<col><col><col><col><tr>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">Perfect</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">OLS</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">2SLS</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(Intercept)</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-80.263 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-53.085 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-3.108&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(5.659)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(8.492)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(14.370)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">educ</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">9.242 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">12.240 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.343)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.503)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">ability</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.258 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.007)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">educ_hat</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">9.252 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(0.856)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">N</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">1000&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">R2</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.726&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.372&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.105&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">logLik</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-4576.101&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-4991.572&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-5168.868&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">AIC</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">9160.202&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">9989.144&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">10343.735&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td colspan="4" style="vertical-align: top; text-align: left; white-space: normal; padding: 4pt 4pt 4pt 4pt;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</td>
+</tr>
+</table>
+
+<p>Note how the coefficient for <code>educ_hat</code> in the 2SLS model is basically the same as the coefficient for <code>educ</code> in the perfect model that accounts for ability. That’s the magic of instrumental variables!</p>
+</div>
+<div id="education-wages-and-parent-education-real-data" class="section level3">
+<h3>Education, wages, and parent education (real data)</h3>
+<p>This data comes from the <code>wage2</code> dataset in the <strong>wooldridge</strong> R package (and it’s real!). Wages are measured in monthly earnings in 1980 dollars.</p>
+<pre class="r"><code>wage2 &lt;- read_csv(&quot;data/wage2.csv&quot;)</code></pre>
+<pre class="r"><code>ed_real &lt;- wage2 %&gt;% 
+  rename(education = educ, education_dad = feduc, education_mom = meduc) %&gt;%
+  na.omit()  # Get rid of rows with missing values</code></pre>
+<p>We want to again estimate the effect of education on wages, but this time we’ll use both one’s father’s education and one’s mother’s education as instruments. Here’s the naive estimation of the relationship, which suffers from endogeneity:</p>
+<pre class="r"><code>model_naive &lt;- lm(wage ~ education, data = ed_real)
+tidy(model_naive)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">175.2</td>
+<td align="right">92.8</td>
+<td align="right">1.89</td>
+<td align="right">0.06</td>
+</tr>
+<tr class="even">
+<td align="left">education</td>
+<td align="right">59.5</td>
+<td align="right">6.7</td>
+<td align="right">8.88</td>
+<td align="right">0.00</td>
+</tr>
+</tbody>
+</table>
+<p>This is wrong though! Education is endogenous to unmeasured things in the model (like ability, which lives in the error term). We can isolate the exogenous part of education with an instrument.</p>
+<p>Before doing any 2SLS models, we want to check the validity of the instruments. Remember, for an instrument to be valid, it should meet these criteria:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Relevance</strong>: Instrument is correlated with policy variable</li>
+<li><strong>Exclusion</strong>: Instrument is correlated with outcome <em>only through</em> the policy variable</li>
+<li><strong>Exogeneity</strong>: Instrument isn’t correlated with anything else in the model (i.e. omitted variables)</li>
+</ol>
+<p>We can check for relevance by looking at the relationship between the instruments and education:</p>
+<pre class="r"><code># Combine father&#39;s and mother&#39;s education into one column so we can plot both at the same time
+ed_real_long &lt;- ed_real %&gt;% 
+  pivot_longer(cols = c(education_dad, education_mom), 
+               names_to = &quot;instrument&quot;, values_to = &quot;instrument_value&quot;)
+
+ggplot(ed_real_long, aes(x = instrument_value, y = education)) +
+  geom_point() + 
+  geom_smooth(method = &quot;lm&quot;) +
+  facet_wrap(~ instrument)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-19-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>model_check_instruments &lt;- lm(education ~ education_dad + education_mom, 
+                              data = ed_real)
+tidy(model_check_instruments)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">9.913</td>
+<td align="right">0.320</td>
+<td align="right">31.02</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">education_dad</td>
+<td align="right">0.219</td>
+<td align="right">0.029</td>
+<td align="right">7.58</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">education_mom</td>
+<td align="right">0.140</td>
+<td align="right">0.034</td>
+<td align="right">4.17</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>glance(model_check_instruments)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">r.squared</th>
+<th align="right">adj.r.squared</th>
+<th align="right">sigma</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">df</th>
+<th align="right">logLik</th>
+<th align="right">AIC</th>
+<th align="right">BIC</th>
+<th align="right">deviance</th>
+<th align="right">df.residual</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.202</td>
+<td align="right">0.199</td>
+<td align="right">2</td>
+<td align="right">83.3</td>
+<td align="right">0</td>
+<td align="right">3</td>
+<td align="right">-1398</td>
+<td align="right">2804</td>
+<td align="right">2822</td>
+<td align="right">2632</td>
+<td align="right">660</td>
+</tr>
+</tbody>
+</table>
+<p>There’s a clear relationship between both of the instruments and education, and the coefficients for each are signficiant. The F-statistic for the model is 83, which is higher than 10, which is a good sign of a strong instrument.</p>
+<p>We can check for exclusion in part by looking at the relationship between the instruments and the outcome, or wages. We should see some relationship:</p>
+<pre class="r"><code>ggplot(ed_real_long, aes(x = instrument_value, y = wage)) +
+  geom_point() + 
+  geom_smooth(method = &quot;lm&quot;) +
+  facet_wrap(~ instrument)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-21-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>And we do! Now we just have to make the case that the only reason there’s a relationship is that parental education only influences wages through education. Good luck with that.</p>
+<p>The last step is to prove exogeneity—that parental education is not correlated with education or wages. Good luck with that too.</p>
+<p>Assuming that parental education is a good instrument, we can use it to remove the endogenous part of education using 2SLS. In the first stage, we predict education using our instruments:</p>
+<pre class="r"><code>first_stage &lt;- lm(education ~ education_dad + education_mom, data = ed_real)</code></pre>
+<p>We can then extract the predicted education and add it to our main dataset, renaming the <code>.fitted</code> variable to something more useful along the way:</p>
+<pre class="r"><code>ed_real_with_predicted &lt;- augment_columns(first_stage, ed_real) %&gt;% 
+  rename(education_hat = .fitted)</code></pre>
+<p>Finally, we can use predicted education to estimate the exogenous effect of education on wages:</p>
+<pre class="r"><code>second_stage &lt;- lm(wage ~ education_hat, 
+                   data = ed_real_with_predicted)
+tidy(second_stage)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-538</td>
+<td align="right">208.2</td>
+<td align="right">-2.58</td>
+<td align="right">0.01</td>
+</tr>
+<tr class="even">
+<td align="left">education_hat</td>
+<td align="right">112</td>
+<td align="right">15.2</td>
+<td align="right">7.35</td>
+<td align="right">0.00</td>
+</tr>
+</tbody>
+</table>
+<p>That should arguably be our actual effect! Let’s compare it to the naive model:</p>
+<pre class="r"><code>huxreg(list(&quot;OLS&quot; = model_naive, &quot;2SLS&quot; = second_stage))</code></pre>
+<table class="huxtable" style="border-collapse: collapse; margin-bottom: 2em; margin-top: 2em; width: 50%; margin-left: 0%; margin-right: auto;  ">
+<col><col><col><tr>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">OLS</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">2SLS</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(Intercept)</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">175.160&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-537.712 *&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(92.839)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(208.164)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">education</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">59.452 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(6.698)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">education_hat</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">111.561 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(15.176)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">N</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">663&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">663&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">R2</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.106&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.076&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">logLik</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-4885.974&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-4897.252&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">AIC</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">9777.947&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">9800.503&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td colspan="3" style="vertical-align: top; text-align: left; white-space: normal; padding: 4pt 4pt 4pt 4pt;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</td>
+</tr>
+</table>
+
+<p>The 2SLS effect is roughly twice as large and is arguably more accurate, since it has removed the endogeneity from education. An extra year of school leads to an extra $111.56 dollars a month in income (in 1980 dollars).</p>
+<p>If you don’t want to go through the hassle of doing the two stages by hand, you can use the <code>iv_robust()</code> function from the <strong>estimatr</strong> package to do both stages at the same time. The second stage goes on the left side of the <code>|</code>, just like a normal regression. The first stage goes on the right side of the <code>|</code>:</p>
+<pre class="r"><code>model_same_time &lt;- iv_robust(wage ~ education | education_dad + education_mom,
+                             data = ed_real)
+tidy(model_same_time)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
+<th align="right">df</th>
+<th align="left">outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">-538</td>
+<td align="right">214.4</td>
+<td align="right">-2.51</td>
+<td align="right">0.012</td>
+<td align="right">-958.8</td>
+<td align="right">-117</td>
+<td align="right">661</td>
+<td align="left">wage</td>
+</tr>
+<tr class="even">
+<td align="left">education</td>
+<td align="right">112</td>
+<td align="right">15.9</td>
+<td align="right">7.02</td>
+<td align="right">0.000</td>
+<td align="right">80.3</td>
+<td align="right">143</td>
+<td align="right">661</td>
+<td align="left">wage</td>
+</tr>
+</tbody>
+</table>
+<p>We should get the same coefficient as the second stage, but the standard errors with <code>iv_robust</code> are more accurate. The only problem with <code>iv_robust</code> is that there’s no way to see the first stage, so if you want to check for relevancy or show the F-test or show the coefficients for the instruments, you’ll have to run a <code>first_stage</code> model on your own.</p>
+<p>Models from <code>iv_robust()</code> also work with <code>huxreg()</code>. Note how the education variable isn’t renamed <code>educ_hat</code> in the <code>iv_robust()</code> version—it’s still using predicted education even if it’s not obvious</p>
+<pre class="r"><code>huxreg(list(&quot;OLS&quot; = model_naive, &quot;2SLS&quot; = second_stage, 
+            &quot;2SLS iv_robust&quot; = model_same_time))</code></pre>
+<table class="huxtable" style="border-collapse: collapse; margin-bottom: 2em; margin-top: 2em; width: 50%; margin-left: auto; margin-right: auto;  ">
+<col><col><col><col><tr>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">OLS</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">2SLS</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">2SLS iv_robust</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(Intercept)</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">175.160&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-537.712 *&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-537.712 *&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(92.839)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(208.164)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(214.431)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">education</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">59.452 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">111.561 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(6.698)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(15.901)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">education_hat</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">111.561 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(15.176)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">N</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">663&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">663&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">663&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">R2</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.106&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.076&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.025&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">logLik</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-4885.974&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-4897.252&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">AIC</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">9777.947&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">9800.503&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td colspan="4" style="vertical-align: top; text-align: left; white-space: normal; padding: 4pt 4pt 4pt 4pt;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</td>
+</tr>
+</table>
+
+</div>
+<div id="education-wages-and-distance-to-college-real-data" class="section level3">
+<h3>Education, wages, and distance to college (real data)</h3>
+<p>For this last example we’ll estimate the effect of education on wages using a different instrument—geographic proximity to colleges. This data comes from David Card’s 1995 study where he did the same thing, and it’s available in the <strong>wooldridge</strong> library as <code>card</code>. You can find a description of all variables <a href="http://fmwww.bc.edu/ec-p/data/wooldridge/card.des">here</a>; we’ll use these:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Variable name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>lwage</code></td>
+<td>Annual wage (log form)</td>
+</tr>
+<tr class="even">
+<td><code>educ</code></td>
+<td>Years of education</td>
+</tr>
+<tr class="odd">
+<td><code>nearc4</code></td>
+<td>Living close to college (=1) or far from college (=0)</td>
+</tr>
+<tr class="even">
+<td><code>smsa</code></td>
+<td>Living in metropolitan area (=1) or not (=0)</td>
+</tr>
+<tr class="odd">
+<td><code>exper</code></td>
+<td>Years of experience</td>
+</tr>
+<tr class="even">
+<td><code>expersq</code></td>
+<td>Years of experience (squared term)</td>
+</tr>
+<tr class="odd">
+<td><code>black</code></td>
+<td>Black (=1), not black (=0)</td>
+</tr>
+<tr class="even">
+<td><code>south</code></td>
+<td>Living in the south (=1) or not (=0)</td>
+</tr>
+</tbody>
+</table>
+<p>Once again, Card wants to estimate the impact of education on wage. But to solve the ability bias, he utilizes a different instrumental variable: <strong>proximity to college</strong>. He provides arguments to support each of three main characteristics of a good instrumental variable:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Relevancy</strong>: People who live close to a 4-year college have easier access to education at a lower costs (no commuting costs and time nor accommodation costs), so they have greater incentives to pursue education.</li>
+<li><strong>Exclusion</strong>: Proximity to a college has no effect on your annual income, unless you decide to pursue further education because of the nearby college.</li>
+<li><strong>Exogeneity</strong>: Individual ability does not depend on proximity to a college.</li>
+</ol>
+<p>Therefore, he estimates a model where:</p>
+<p><strong>First stage:</strong></p>
+<p><span class="math display">\[
+\widehat{\text{Educ}} = \beta_0 + \beta_1\text{nearc4} + \beta_{2-6}\text{Control variables}
+\]</span></p>
+<p><strong>Second stage:</strong></p>
+<p><span class="math display">\[
+\text{lwage} = \beta_0 + \beta_1 \widehat{\text{Educ}} + \beta_{2-6}\text{Control variables}
+\]</span></p>
+<p>He controls for five things: <code>smsa66 + exper + expersq + black + south66</code>.</p>
+<p>We can do the same thing. <strong>IMPORTANT NOTE</strong>: When you include controls, <a href="https://stats.stackexchange.com/a/177752/3025">every control variable needs to go in <em>both stages</em></a>. The only things from the first stage that don’t carry over to the second stage are the instruments—notice how <code>nearc4</code> is only in the first stage, since it’s the instrument, but it’s not in the second stage. The other controls are all in both stages.</p>
+<pre class="r"><code>card &lt;- read_csv(&quot;data/card.csv&quot;)</code></pre>
+<pre class="r"><code># First we&#39;ll build a naive model without any instruments so we can see the bias
+# in the educ coefficient
+naive_model &lt;- lm(lwage ~ educ + smsa66 + exper + expersq + black + south66, 
+                  data = card)
+
+# Then we&#39;ll run the first stage, predicting educ with nearc4 + all the controls
+first_stage &lt;- lm(educ ~ nearc4 + smsa66 + exper + expersq + black + south66,
+                  data = card)
+
+# Then we&#39;ll add the fitted education values into the original dataset and
+# rename the .fitted column so it&#39;s easier to work with
+card &lt;- augment_columns(first_stage, card) %&gt;% 
+  rename(educ_hat = .fitted)
+
+# Finally we can run the second stage model using the predicted education from
+# the first stage
+second_stage &lt;- lm(lwage ~ educ_hat + smsa66 + exper + expersq + black + south66, 
+                  data = card)
+
+# Just for fun, we can do all of this at the same time with iv_robsust
+model_2sls &lt;- iv_robust(lwage ~ educ + smsa66 + exper + expersq + black + south66 | 
+                          nearc4 + smsa66 + exper + expersq + black + south66,
+                        data = card)</code></pre>
+<pre class="r"><code>huxreg(list(&quot;OLS&quot; = naive_model, &quot;2SLS&quot; = second_stage, &quot;2SLS iv_robust&quot; = model_2sls))</code></pre>
+<table class="huxtable" style="border-collapse: collapse; margin-bottom: 2em; margin-top: 2em; width: 50%; margin-left: auto; margin-right: auto;  ">
+<col><col><col><col><tr>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">OLS</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">2SLS</td>
+<td style="vertical-align: top; text-align: center; white-space: nowrap; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">2SLS iv_robust</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(Intercept)</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">4.731 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">3.357 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">3.357 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.069)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.926)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.930)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">educ</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.076 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.157 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.004)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.055)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">smsa66</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.113 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.081 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.081 **&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.015)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.027)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.027)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">exper</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.085 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.118 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.118 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.007)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.023)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.024)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">expersq</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.002 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.002 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.002 ***</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.000)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.000)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.000)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">black</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.177 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.104&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.104 *&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.018)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.053)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.052)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">south66</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.096 ***</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.064 *&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-0.064 *&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.016)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.028)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">(0.028)&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">educ_hat</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.157 **&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;"></td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">(0.055)&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">N</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">3010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">3010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">3010&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">R2</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.269&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.160&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">0.143&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">logLik</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1352.703&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">-1563.264&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td style="vertical-align: top; text-align: left; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">AIC</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">2721.406&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">3142.528&nbsp;&nbsp;&nbsp;&nbsp;</td>
+<td style="vertical-align: top; text-align: right; white-space: nowrap; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt; padding: 4pt 4pt 4pt 4pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+<td colspan="4" style="vertical-align: top; text-align: left; white-space: normal; padding: 4pt 4pt 4pt 4pt;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</td>
+</tr>
+</table>
+
+<p>Notice how <code>educ_hat</code> and <code>educ</code> are the same in each of the 2SLS models, and they’re higher than the naive uninstrumented model. Because the outcome is log wages, we can say that an extra year of education causes a 15.7% increase in wages.</p>
+</div>
+</div>
+<div id="itt-and-cace" class="section level2">
+<h2>ITT and CACE</h2>
+<div id="compliance" class="section level3">
+<h3>Compliance</h3>
+<p>In class we talked about the difference between the average treatment effect (ATE), or the average effect of a program for an entire population, and conditional averages treatment effects (CATE), or the average effect of a program for some segment of the population. There are all sorts of CATEs: you can find the CATE for men vs. women, for people who are treated with the program (the average treatment on the treated, or ATT or TOT), for people who are not treated with the program (the average treatment on the untreated, or ATU), and so on.</p>
+<p>One important type of CATE is the effect of a program on just those who comply with the program. We can call this the complier average treatment effect, but the acronym would be the same as conditional average treatment effect, so we’ll call it the <em>conditional average causal effect</em> (CACE).</p>
+<p>Thinking about compliance is important. You might randomly assign people to receive treatment or a program, but people might not do what you tell them. Additionally, people might do the program if assigned to do it, but they would have done it anyway. We can split the population into four types of people:</p>
+<ul>
+<li><strong>Compliers</strong>: People who follow whatever their assignment is (if assigned to treatment, they do the program; if assigned to control, they don’t)</li>
+<li><strong>Always takers</strong>: People who will receive or seek out the program regardless of assignment (if assigned to treatment, they do the program; if assigned to control, they still do the program)</li>
+<li><strong>Never takers</strong>: People who will not receive or seek out the program regardless of assignment (if assigned to treatment, they don’t do the program; if assigned to control, they also don’t do it)</li>
+<li><strong>Defiers</strong>: People who will do the opposite of whatever their assignment is (if assigned to treatment, they don’t do the program; if assigned to control, they do the program)</li>
+</ul>
+<p>To simplify things, evaluators and econometricians assume that defiers don’t exist based on the idea of <em>monotonicity</em>, which means that we can assume that the effect of being assigned to treatment only increases the likelihood of participating in the program (and doesn’t make it more likely).</p>
+<p>The tricky part about trying to find who the compliers are in a sample is that we can’t know what people would have done in the absence of treatment. If we see that someone in the experiment was assigned to be in the treatment group and they then participated in the program, they could be a complier (since they did what they were assigned to do), or they could be an always taker (they did what they were assigned to do, but they would have done it anyway). Due to the fundamental problem of causal inference, we cannot know what each person would have done in a parallel world.</p>
+<p>We can use data from a hypothetical program to see how these three types of compliers distort our outcomes.</p>
+<pre class="r"><code>library(tidyverse)
+library(broom)
+library(estimatr)
+
+bed_nets &lt;- read_csv(&quot;data/bed_nets_observed.csv&quot;) %&gt;% 
+  # Make &quot;No bed net&quot; (control) the base case
+  mutate(bed_net = fct_relevel(bed_net, &quot;No bed net&quot;))
+
+bed_nets_time_machine &lt;- read_csv(&quot;data/bed_nets_time_machine.csv&quot;) %&gt;% 
+  mutate(bed_net = fct_relevel(bed_net, &quot;No bed net&quot;))</code></pre>
+<p>This is what we would be able to see if we could read everyone’s minds. There are always takers who will use a bed net regardless of the program, and they’ll have higher health outcomes. However, those better outcomes are because of something endogenous—there’s something else that makes these people always pursue bed nets, and that’s likely related to health. We probably want to not consider them when looking for the program effect. There are never takers who won’t ever use a bed net, and they have worse health outcomes. Again, there’d endogeneity here—something is causing them to not use the bed nets, and it likely also causes their health level. We don’t want to look at them either.</p>
+<p>The middle group—the compliers—are the people we want to focus on. Here we see that the program had an effect when compared to a control group.</p>
+<pre class="r"><code>ggplot(bed_nets_time_machine, aes(y = health, x = treatment)) + 
+  geom_point(aes(shape = bed_net, color = status), position = &quot;jitter&quot;) + 
+  facet_wrap(~ status) + 
+  labs(color = &quot;Type of person&quot;, shape = &quot;Compliance&quot;,
+       x = NULL, y = &quot;Health status&quot;)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-37-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="finding-compliers-in-actual-data" class="section level3">
+<h3>Finding compliers in actual data</h3>
+<p>This is what we actually see in the data, though. You can tell who some of the always takers are (those who used bed nets after being assigned to the control group) and who some of the never takers are (those who did not use a bed net after being assigned to the treatment group), but compliers are mixed up with the always and never takers. We have to somehow disentangle them!</p>
+<pre class="r"><code>ggplot(bed_nets_time_machine, aes(y = health, x = treatment)) + 
+  geom_point(aes(shape = bed_net, color = status), position = &quot;jitter&quot;) + 
+  facet_wrap(~ bed_net) +
+  labs(color = &quot;Type of person&quot;, shape = &quot;Compliance&quot;,
+       x = NULL, y = &quot;Health status&quot;)</code></pre>
+<p><img src="/class/12-class_files/figure-html/unnamed-chunk-38-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>We can do this by assuming the proportion of compliers, never takers, and always takers are equally spread across treatment and control (which we can assume through the magic of randomization). If that’s the case, we can calculate the intent to treat (ITT) effect, which is the CATE of being assigned treatment (or the effect of being assigned treatment on health status, regardless of actual compliance).</p>
+<p>The ITT is actually composed of three different causal effects: the complier average causal effect (CACE), the always taker average causal effect (ATACE), and the never taker average causal effect (NTACE). In the formula below, <span class="math inline">\(\pi\)</span> stands for the proportion of people in each group. Formally, the ITT can be defined like this:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\text{ITT} =&amp; \pi_\text{compliers} \times (\text{T} - \text{C})_\text{compliers} + \\
+&amp;\pi_\text{always takers} \times (\text{T} - \text{C})_\text{always takers} + \\
+&amp;\pi_\text{never takers} \times (\text{T} - \text{C})_\text{never takers}
+\end{aligned}
+\]</span></p>
+<p>We can simplify this to this acronymized version:</p>
+<p><span class="math display">\[
+\text{ITT} = \pi_\text{C} \text{CACE} + \pi_\text{A} \text{ATACE} + \pi_\text{N} \text{NTACE}
+\]</span></p>
+<p>The number we care about the most here is the CACE, which is stuck in the middle of the equation. If we assume that assignment to treatment doesn’t make someone more likely to be an always taker or a never taker, we can set the ATACE and NTACE to zero, leaving us with just three variables to worry about: ITT, <span class="math inline">\(\pi_\text{c}\)</span>, and CACE:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\text{ITT} =&amp; \pi_\text{C} \text{CACE} + \pi_\text{A} 0 + \pi_\text{N} 0 \\
+&amp; \pi_\text{C} \text{CACE}
+\end{aligned}
+\]</span></p>
+<p>We can use algebra to rearrange this formula so that we’re left with an equation that starts with CACE (since that’s the value we care about):</p>
+<p><span class="math display">\[
+\text{CACE} = \frac{\text{ITT}}{\pi_\text{C}}
+\]</span></p>
+<p>If we can find the ITT and the proportion of compliers, we can find the complier average causal effect (CACE). The ITT is easy to find with a simple OLS model:</p>
+<pre class="r"><code>itt_model &lt;- lm(health ~ treatment, data = bed_nets)
+
+tidy(itt_model)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">40.94</td>
+<td align="right">0.444</td>
+<td align="right">92.11</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">treatmentTreatment</td>
+<td align="right">5.99</td>
+<td align="right">0.630</td>
+<td align="right">9.51</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>ITT &lt;- tidy(itt_model) %&gt;% 
+  filter(term == &quot;treatmentTreatment&quot;) %&gt;% 
+  pull(estimate)</code></pre>
+<p>The ITT here is ≈6—being assigned treatment increases average health status by 5.99 health points.</p>
+<p>The proportion of compliers is a little trickier, but doable with some algebraic trickery. Recall from the graph above that the people who were in the treatment group and who complied are a combination of always takers and compliers. This means we can say:</p>
+<p><span class="math display">\[
+\begin{aligned}
+\pi_\text{A} + \pi_\text{C} =&amp; \text{% yes in treatment; or} \\
+\pi_\text{C} =&amp; \text{% yes in treatment} - \pi_\text{A}
+\end{aligned}
+\]</span></p>
+<p>We actually know <span class="math inline">\(\pi_\text{A}\)</span>—remember in the graph above that the people who were in the control group and who used bed nets are guaranteed to be always takers (none of them are compliers or never takers). If we assume that the proportion of always takers is the same in both treatment and control, we can use that percent here, giving us this final equation for <span class="math inline">\(\pi_\text{C}\)</span>:</p>
+<p><span class="math display">\[
+\pi_\text{C} = \text{% yes in treatment} - \text{% yes in control}
+\]</span></p>
+<p>So, if we can find the percent of people assigned to treatment who used bed nets, find the percent of people assigned to control and used bed nets, and subtract the two percentages, we’ll have the proportion of compliers, or <span class="math inline">\(\pi_\text{C}\)</span>. We can do that with the data we have (61% - 19.5% = 41.5% compliers):</p>
+<pre class="r"><code>bed_nets %&gt;% 
+  group_by(treatment, bed_net) %&gt;% 
+  summarize(n = n()) %&gt;% 
+  mutate(prop = n / sum(n))</code></pre>
+<pre><code>## # A tibble: 4 x 4
+## # Groups:   treatment [2]
+##   treatment bed_net        n  prop
+##   &lt;chr&gt;     &lt;fct&gt;      &lt;int&gt; &lt;dbl&gt;
+## 1 Control   No bed net   808 0.805
+## 2 Control   Bed net      196 0.195
+## 3 Treatment No bed net   388 0.390
+## 4 Treatment Bed net      608 0.610</code></pre>
+<pre class="r"><code># pi_c = prop yes in treatment - prop yes in control
+pi_c &lt;- 0.6104418 - 0.1952191</code></pre>
+<p>Finally, now that we know both the ITT and <span class="math inline">\(\pi_\text{C}\)</span>, we can find the CACE (or the LATE):</p>
+<pre class="r"><code>CACE &lt;- ITT / pi_c
+CACE</code></pre>
+<pre><code>## [1] 14.4</code></pre>
+<p>It’s 14.4, which means that using bed nets increased health by 14 health points <em>for compliers</em> (which is a lot bigger than the 6 that we found before). We successfully filtered out the always takers and the never takers, and we have our complier-specific causal effect.</p>
+</div>
+<div id="finding-the-cacelate-with-iv2sls" class="section level3">
+<h3>Finding the CACE/LATE with IV/2SLS</h3>
+<p>Doing that is super tedious though! What if there was an easier way to find the effect of the bed net program for just the compliers? We can do this with IV/2SLS regression by using assignment to treatment as an instrument.</p>
+<p>Assignment to treatment works as an instrument because it’s (1) relevant, since being told to use bed nets is probably highly correlated with using bed nets, (2) exclusive, since the only way that being told to use bed nets can cause changes in health is through the actual use of the bed nets, and (3) exogenous, since being told to use bed nets probably isn’t related to other things that cause health.</p>
+<p>Here’s a 2SLS regression with assignment to treatment as the instrument:</p>
+<pre class="r"><code>model_2sls &lt;- iv_robust(health ~ bed_net | treatment, data = bed_nets)
+tidy(model_2sls)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">term</th>
+<th align="right">estimate</th>
+<th align="right">std.error</th>
+<th align="right">statistic</th>
+<th align="right">p.value</th>
+<th align="right">conf.low</th>
+<th align="right">conf.high</th>
+<th align="right">df</th>
+<th align="left">outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">(Intercept)</td>
+<td align="right">38.1</td>
+<td align="right">0.515</td>
+<td align="right">74.0</td>
+<td align="right">0</td>
+<td align="right">37.1</td>
+<td align="right">39.1</td>
+<td align="right">1998</td>
+<td align="left">health</td>
+</tr>
+<tr class="even">
+<td align="left">bed_netBed net</td>
+<td align="right">14.4</td>
+<td align="right">1.254</td>
+<td align="right">11.5</td>
+<td align="right">0</td>
+<td align="right">12.0</td>
+<td align="right">16.9</td>
+<td align="right">1998</td>
+<td align="left">health</td>
+</tr>
+</tbody>
+</table>
+<p>The coefficient for <code>bed_net</code> is identical to the CACE that we found manually! Instrumental variables are helpful for isolated program effects to only compliers when you’re dealing with noncompliance.</p>
+</div>
 </div>
 <div id="clearest-and-muddiest-things" class="section level2">
 <h2>Clearest and muddiest things</h2>

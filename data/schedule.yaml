@@ -104,6 +104,7 @@ lessons:
   - title: '<i class="fas fa-university"></i> **Instrumental variables I & II**'
     date: "April 8"
     reading: "12-reading"
+    class: "12-class"
 
   - title: "Problem set 7"
     date: "April 22"

@@ -1,0 +1,20 @@
+---
+title: "ITT and CACE/LATE"
+output: html_document
+---
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(estimatr)
+library(broom)
+```
+
+```{r message=FALSE}
+bed_nets <- read_csv("data/bed_nets_observed.csv") %>% 
+  # Make "No bed net" (control) the base case
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+
+bed_nets_time_machine <- read_csv("data/bed_nets_time_machine.csv") %>% 
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+```
+

@@ -1,0 +1,75 @@
+---
+title: "ITT and CACE/LATE"
+output: html_document
+---
+
+```{r setup, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(estimatr)
+library(broom)
+```
+
+```{r message=FALSE}
+bed_nets <- read_csv("data/bed_nets_observed.csv") %>% 
+  # Make "No bed net" (control) the base case
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+
+bed_nets_time_machine <- read_csv("data/bed_nets_time_machine.csv") %>% 
+  mutate(bed_net = fct_relevel(bed_net, "No bed net"))
+```
+
+```{r}
+ggplot(bed_nets_time_machine, aes(y = health, x = treatment)) + 
+  geom_point(aes(shape = bed_net, color = status), position = "jitter") + 
+  facet_wrap(~ status)
+```
+
+```{r}
+ggplot(bed_nets_time_machine, aes(y = health, x = treatment)) + 
+  geom_point(aes(shape = bed_net, color = status), position = "jitter") + 
+  facet_wrap(~ bed_net)
+```
+
+
+```{r}
+# ITT
+bed_nets %>% 
+  group_by(treatment) %>% 
+  summarize(avg = mean(health))
+
+itt_model <- lm(health ~ treatment, data = bed_nets)
+
+tidy(itt_model)
+
+ITT <- tidy(itt_model) %>% 
+  filter(term == "treatmentTreatment") %>% 
+  pull(estimate)
+```
+
+```{r}
+# prop_c
+bed_nets %>% 
+  group_by(treatment, bed_net) %>% 
+  summarize(n = n()) %>% 
+  mutate(prop = n / sum(n))
+
+# pi_c = prop yes in treatment - prop yes in control
+pi_c <- 0.6104418 - 0.1952191
+```
+
+```{r}
+LATE <- ITT / pi_c
+LATE
+```
+
+```{r}
+truth <- bed_nets_time_machine %>%
+  filter(status == "Complier") %>% 
+  summarize(LATE = mean(health_1 - health_0))
+truth
+```
+
+```{r}
+model_iv <- iv_robust(health ~ bed_net | treatment, data = bed_nets)
+tidy(model_iv)
+```

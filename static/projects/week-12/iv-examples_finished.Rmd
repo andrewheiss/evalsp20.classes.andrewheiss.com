@@ -1,0 +1,203 @@
+---
+title: "IV examples (finished)"
+output: 
+  html_document: 
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(broom)
+library(huxtable)
+library(estimatr)
+
+# Stop huxtable from reformatting everything
+options('huxtable.knit_print_df' = FALSE)
+```
+
+# Education, wages, and parent education (fake data)
+
+```{r}
+# Load data
+ed_fake <- read_csv("data/father_education.csv")
+```
+
+If we could actually measure ability, here's what the model would be:
+
+```{r}
+model_perfect <- lm(wage ~ educ + ability, data = ed_fake)
+tidy(model_perfect)
+```
+
+We don't have `ability`, though, so we're stuck with a naive model:
+
+```{r}
+model_naive <- lm(wage ~ educ, data = ed_fake)
+tidy(model_naive)
+```
+
+But education suffers from endogeneity---there are things in the model (like ability, hidden in the error term) that are correlated with it. Any estimate we calculate will be wrong and biased because of selection effects or omitted variable bias (all different names for endogeneity).
+
+To fix the endogeneity problem, we can use an instrument to remove the endogeneity from education and instead use a special exogeneity-only version of education. Perhaps someone's father's education can be an instrument for education.
+
+To be a valid instrument, it must meet three criteria:
+
+1. Relevance: Instrument is correlated with policy variable
+2. Exclusion: Instrument is correlated with outcome *only through* the policy variable
+3. Exogeneity: Instrument isn't correlated with anything else in the model (i.e. omitted variables)
+
+We can first test relevance by making a scatterplot and running a model of `policy ~ instrument`:
+
+```{r}
+ggplot(ed_fake, aes(x = fathereduc, y = educ)) +
+  geom_point() +
+  geom_smooth()
+
+check_relevance <- lm(educ ~ fathereduc, data = ed_fake)
+tidy(check_relevance)
+glance(check_relevance)
+```
+
+Looks good! The F statistic is definitely above 10 (it's 972!), and there's a significant relationship between the instrument and policy.
+
+To check for exclusion, we need to see if there's a relationship between father's education and wages that occurs *only* because of education. If we plot it, we'll see a relationship:
+
+```{r}
+ggplot(ed_fake, aes(x = fathereduc, y = wage)) +
+  geom_point() +
+  geom_smooth()
+```
+
+That's to be expected, since in our model, father's education causes education which causes wages---they should be correlated. We have to use theory to justify the idea that a father's education increases the hourly wage *only because it increases one's education*, and there's no real statistical test for that. 
+
+There's not really a test for exogeneity either, since there's no way to measure other endogenous variables in the model (that's the whole reason we're using IVs in the first place!). Becuase we have the magical `ability` column in this fake data, we can test it. Father's education shouldn't be related to ability:
+
+```{r}
+ggplot(ed_fake, aes(x = ability, y = fathereduc)) +
+  geom_point() +
+  geom_smooth()
+```
+
+No relationship! Yay!
+
+Now we can do 2SLS and use the instrument to filter out the endogenous part of education. The first stage predicts education based on the instrument (we already ran this earlier):
+
+```{r}
+first_stage <- lm(educ ~ fathereduc, data = ed_fake)
+```
+
+We want to add a column of predicted education to our dataset. The easiest way to do that is with the `augment_columns()` function from the broom library:
+
+```{r}
+ed_fake_with_predictions <- augment_columns(first_stage, ed_fake) %>% 
+  rename(educ_hat = .fitted)
+head(ed_fake)
+```
+
+Now we have a column named `educ_hat` that is the part of education explained by the instrument, or just the exogenous part. We can use that in our second stage model:
+
+```{r}
+second_stage <- lm(wage ~ educ_hat, data = ed_fake_with_predictions)
+tidy(second_stage)
+```
+
+According to the second stage, an extra year of education *causes* a \$9.25 increase in wages.
+
+We can compare all these models at the same time to see what happened:
+
+```{r}
+huxreg(model_perfect, model_naive, first_stage, second_stage)
+```
+
+
+# Education, wages, and parent education (real data)
+
+This data comes from the **wooldridge** R package (and it's real!)
+
+```{r}
+wage2 <- read_csv("data/wage2.csv")
+
+ed_real <- wage2 %>% 
+  mutate(wage, education = educ, education_dad = feduc, education_mom = meduc) %>%
+  na.omit()
+
+naive_model <- lm(wage ~ education, data = ed_real)
+
+first_stage <- lm(education ~ education_dad + education_mom, data = ed_real)
+
+ed_real <- augment_columns(first_stage, ed_real) %>% 
+  rename(education_hat = .fitted)
+
+second_stage <- lm(wage ~ education_hat, data = ed_real)
+
+shorter_model <- iv_robust(wage ~ education | education_dad + education_mom,
+                           data = ed_real)
+
+huxreg(naive_model, second_stage, shorter_model)
+```
+
+
+# Education, wages, and distance to college (real data)
+
+```{r}
+card <- read_csv("data/card.csv")
+head(card)
+```
+
+For this exercise we are going to use the following variables. You can find a description of all variables [here](http://fmwww.bc.edu/ec-p/data/wooldridge/card.des).
+
+| **Variable name**    | **Description**                                       | 
+| -------------------- | ------------------------------------------------------|
+| lwage                | Annual wage (log form)                                |
+| educ                 | Years of education                                    |
+| nearc4               | Living close to college (=1) or far from college (=0) |
+| smsa                 | Living in metropolitan area (=1) or not (=0)          |
+| exper                | Years of experience                                   | 
+| expersq              | Years of experience (squared term)                    | 
+| black                | Black (=1), not black (=0)                            |
+| south                | Living in the south (=1) or not (=0)                  |
+
+As we did before, Card wants to estimate the impact of education on wage. But to solve the ability bias, he utilizes a different instrumental variable: **proximity to college**. He provides arguments to support each of three main characteristics of a good instrumental variable:
+
+1. **It is correlated with the policy variable:** Individuals who live close to a 4-year college have easier access to education at a lower costs (no commuting costs and time nor accommodation costs), so they have greater incentives to pursue education.
+2. **It is not correlated with the omitted variable:** Individual ability does not depend on proximity to a college.
+3. **It is correlated to the dependent variable only through the policy variable:** Proximity to a college has no effect on your annual income, unless you decide to pursue further education because of the nearby college. 
+
+Therefore, he estimates a model where:
+
+**First stage:**
+
+$$
+\widehat{\text{Educ}} = \beta_0 + \beta_1\text{nearc4} + \beta_{2-6}\text{Control variables}
+$$
+
+**Second stage:**
+
+$$
+\text{lwage} = \beta_0 + \beta_1 \widehat{\text{Educ}} + \beta_{2-6}\text{Control variables}
+$$
+
+```{r}
+naive_model <- lm(lwage ~ educ + smsa66 + exper + expersq + black + south66, 
+                  data = card)
+
+first_stage <- lm(educ ~ nearc4 + smsa66 + exper + expersq + black + south66,
+                  data = card)
+
+card <- augment_columns(first_stage, card) %>% 
+  rename(educ_hat = .fitted)
+
+second_stage <- lm(lwage ~ educ_hat + smsa66 + exper + expersq + black + south66, 
+                  data = card)
+
+huxreg(list("OLS" = naive_model, "2SLS" = second_stage))
+```
+
+```{r}
+fancy <- iv_robust(lwage ~ educ + smsa66 + exper + expersq + black + south66 | 
+                     nearc4 + smsa66 + exper + expersq + black + south66,
+                   data = card)
+tidy(fancy)
+
+huxreg(list("OLS" = naive_model, "2SLS" = second_stage, "2SLS fancy" = fancy))
+```
