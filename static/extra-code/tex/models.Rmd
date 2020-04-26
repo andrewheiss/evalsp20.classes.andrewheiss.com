@@ -1,0 +1,80 @@
+---
+title: "IV models"
+output: 
+  pdf_document: 
+    latex_engine: xelatex
+mainfont: Fira Sans Condensed
+monofont: Consolas
+---
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(broom)
+
+father_education <- read_csv(here::here("static", "data", "father_education.csv"))
+```
+
+\ 
+
+```{r}
+first_stage <- lm(educ ~ fathereduc, data = father_education)
+```
+
+```{r}
+tidy(first_stage)
+```
+
+```{r}
+glance(first_stage)
+```
+
+\newpage
+
+```{r include=FALSE}
+data_with_predictions <- augment_columns(first_stage, data = father_education) %>% 
+  rename(educ_hat = .fitted) %>% 
+  select(wage, ability, fathereduc, educ, educ_hat)
+```
+
+```{r eval=FALSE}
+data_with_predictions <- augment_columns(first_stage, data = father_education) %>% 
+  rename(educ_hat = .fitted)
+```
+
+```{r}
+head(data_with_predictions)
+```
+\newpage
+
+```{r}
+second_stage <- lm(wage ~ educ_hat, data = data_with_predictions)
+tidy(second_stage)
+```
+\newpage
+
+```{r}
+library(estimatr)
+
+model_estimatr <- iv_robust(wage ~ educ | fathereduc, 
+                            data = father_education)
+```
+
+```{r}
+tidy(model_estimatr)
+```
+
+\newpage
+
+```{r eval=FALSE}
+first_stage <- lm(educ ~ fathereduc, data = father_education)
+
+data_with_predictions <- augment_columns(first_stage, data = father_education) %>% 
+  rename(educ_hat = .fitted)
+
+second_stage <- lm(wage ~ educ_hat, data = data_with_predictions)
+```
+
+```{r eval=FALSE}
+tidy(second_stage)
+```
+

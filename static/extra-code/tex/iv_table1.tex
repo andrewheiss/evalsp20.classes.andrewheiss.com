@@ -1,0 +1,62 @@
+%!TeX program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[20pt]{article}
+\usepackage{geometry}
+\geometry{letterpaper}
+\usepackage{graphicx}
+\usepackage{amssymb}
+
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+\usepackage{fontspec,xltxtra,xunicode}
+\defaultfontfeatures{Mapping=tex-text}
+\setromanfont[Mapping=tex-text]{Fira Sans Condensed}
+%\setsansfont[Scale=MatchLowercase,Mapping=tex-text]{Gill Sans}
+%\setmonofont[Scale=MatchLowercase]{Andale Mono}
+
+\begin{document}
+
+% \setlength\LTcapwidth{\textwidth} % default: 4in (rather less than \textwidth...)      
+
+% Padding on the sides of longtables
+\setlength\LTleft{0.5in}
+\setlength\LTright{0.5in}      
+
+\begingroup
+\huge
+
+% \begin{longtable}[c]{lll}
+% https://tex.stackexchange.com/questions/153422/textwidth-longtable-with-centered-headers
+% https://tex.stackexchange.com/questions/46511/how-to-set-width-of-longtable
+% \begin{longtable}{@{\extracolsep{\fill}}ccc}
+
+\captionsetup[table]{font=normal,skip=0pt}
+\begin{longtable}{@{\extracolsep{\fill}}ccc}
+\toprule
+& \multicolumn{2}{c}{Outcome = Wage} \\ 
+ \cmidrule(lr){2-3}
+        & Unadjusted & Adjusted \\ 
+\midrule\relax
+(Intercept) & -53.085*** & -80.263*** \\ 
+ & (8.492) & (5.659) \\ 
+educ & 12.240*** & 9.242*** \\ 
+ & (0.503) & (0.343) \\ 
+ability &  & 0.258*** \\ 
+ &  & (0.007) \\ 
+\midrule
+Num.Obs. & 1000 & 1000 \\ 
+R2 & 0.372 & 0.726 \\ 
+Adj.R2 & 0.371 & 0.726 \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+* p < 0.1, ** p < 0.05, *** p < 0.01\\ 
+\end{minipage}
+
+\endgroup
+
+
+\end{document}

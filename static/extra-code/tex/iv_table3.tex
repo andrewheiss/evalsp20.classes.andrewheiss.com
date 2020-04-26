@@ -1,0 +1,67 @@
+%!TeX program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[20pt]{article}
+\usepackage{geometry}
+\geometry{letterpaper}
+\usepackage{graphicx}
+\usepackage{amssymb}
+
+\usepackage{caption}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+\usepackage{pdflscape}
+
+\usepackage{fontspec,xltxtra,xunicode}
+\defaultfontfeatures{Mapping=tex-text}
+\setromanfont[Mapping=tex-text]{Fira Sans Condensed}
+%\setsansfont[Scale=MatchLowercase,Mapping=tex-text]{Gill Sans}
+%\setmonofont[Scale=MatchLowercase]{Andale Mono}
+
+\begin{document}
+
+% \setlength\LTcapwidth{\textwidth} % default: 4in (rather less than \textwidth...)      
+
+% Padding on the sides of longtables
+\setlength\LTleft{0in}
+\setlength\LTright{0in}      
+
+\begin{landscape}
+\begingroup
+\LARGE
+
+% \begin{longtable}[c]{lll}
+% https://tex.stackexchange.com/questions/153422/textwidth-longtable-with-centered-headers
+% https://tex.stackexchange.com/questions/46511/how-to-set-width-of-longtable
+% \begin{longtable}{@{\extracolsep{\fill}}ccc}
+
+\captionsetup[table]{font=normal,skip=0pt}
+\begin{longtable}{@{\extracolsep{\fill}}ccccc}
+\toprule
+& \multicolumn{4}{c}{Outcome = Wage} \\ 
+ \cmidrule(lr){2-5}
+        & Unadjusted naive & Forbidden model & 2SLS IV (by hand) & 2SLS IV (iv\_robust) \\ 
+\midrule\relax
+(Intercept) & -53.085*** & -80.263*** & -3.108 & -3.108 \\ 
+ & (8.492) & (5.659) & (14.370) & (11.885) \\ 
+educ & 12.240*** & 9.242*** &  & 9.252*** \\ 
+ & (0.503) & (0.343) &  & (0.708) \\ 
+ability &  & 0.258*** &  &  \\ 
+ &  & (0.007) &  &  \\ 
+educ\_hat &  &  & 9.252*** &  \\ 
+ &  &  & (0.856) &  \\ 
+\midrule
+Num.Obs. & 1000 & 1000 & 1000 & 1000 \\ 
+R2 & 0.372 & 0.726 & 0.105 & 0.350 \\ 
+Adj.R2 & 0.371 & 0.726 & 0.104 & 0.349 \\ 
+\bottomrule
+\end{longtable}
+\begin{minipage}{\linewidth}
+* p < 0.1, ** p < 0.05, *** p < 0.01\\ 
+\end{minipage}
+
+\endgroup
+\end{landscape}
+
+\end{document}
